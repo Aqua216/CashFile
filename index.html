@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0a0e1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="財務台帳">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237b8cff'/%3E%3Cstop offset='1' stop-color='%23d65ad6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='180' height='180' rx='40' fill='%230a0e1a'/%3E%3Crect x='14' y='14' width='152' height='152' rx='32' fill='url(%23g)'/%3E%3Ctext x='90' y='120' font-size='90' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'%3E%C2%A5%3C/text%3E%3C/svg%3E">
+<title>財務台帳</title>
+<style>
+:root{
+  --txt:#f4f6fb;--txt-dim:rgba(244,246,251,.62);--txt-faint:rgba(244,246,251,.40);
+  --glass:rgba(255,255,255,.07);--glass-hi:rgba(255,255,255,.13);
+  --stroke:rgba(255,255,255,.14);--stroke-hi:rgba(255,255,255,.30);
+  --exp:#ff8a6b;--inc:#6fe3b0;--r:22px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN",-apple-system,BlinkMacSystemFont,"SF Pro JP","Yu Gothic",Meiryo,sans-serif;
+  color:var(--txt);background:#0a0e1a;-webkit-font-smoothing:antialiased;line-height:1.5;overflow-x:hidden}
+.bg{position:fixed;inset:0;z-index:-2;overflow:hidden;background:
+  radial-gradient(120% 90% at 12% 8%,#1b2a52 0%,transparent 55%),
+  radial-gradient(120% 90% at 92% 14%,#4a2150 0%,transparent 50%),
+  radial-gradient(140% 120% at 70% 100%,#143b3a 0%,transparent 55%),
+  linear-gradient(160deg,#0a0e1a 0%,#0c1124 100%)}
+.bg::before,.bg::after{content:"";position:absolute;border-radius:50%;filter:blur(70px);opacity:.55}
+.bg::before{width:46vw;height:46vw;left:-8vw;top:-6vw;background:radial-gradient(circle,#5b6cff,transparent 70%);animation:d1 22s ease-in-out infinite}
+.bg::after{width:42vw;height:42vw;right:-10vw;bottom:-8vw;background:radial-gradient(circle,#d65ad6,transparent 70%);animation:d2 26s ease-in-out infinite}
+@keyframes d1{0%,100%{transform:translate(0,0)}50%{transform:translate(6vw,5vw)}}
+@keyframes d2{0%,100%{transform:translate(0,0)}50%{transform:translate(-5vw,-4vw)}}
+.wrap{max-width:920px;margin:0 auto;padding:max(24px,env(safe-area-inset-top)) 18px calc(96px + env(safe-area-inset-bottom))}
+.glass{background:var(--glass);border:1px solid var(--stroke);border-radius:var(--r);
+  backdrop-filter:blur(26px) saturate(160%);-webkit-backdrop-filter:blur(26px) saturate(160%);
+  box-shadow:0 8px 32px rgba(0,0,0,.30),inset 0 1px 0 rgba(255,255,255,.18),inset 0 -1px 0 rgba(0,0,0,.12)}
+.tnum{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+
+header{margin-bottom:20px;padding:4px 6px}
+.eyebrow{font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--txt-faint);font-weight:600}
+h1{font-size:clamp(24px,6vw,36px);font-weight:700;letter-spacing:-.02em;margin-top:7px;
+  background:linear-gradient(180deg,#fff,rgba(255,255,255,.72));-webkit-background-clip:text;background-clip:text;color:transparent}
+.range{margin-top:7px;color:var(--txt-dim);font-size:13px}
+
+.tools{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+.tool{font-family:inherit;font-size:12.5px;font-weight:600;padding:9px 14px;border-radius:13px;border:1px solid var(--stroke);background:var(--glass);color:var(--txt-dim);cursor:pointer;transition:.2s}
+.tool:active{transform:scale(.96);color:#fff}
+
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+.seg{display:inline-flex;padding:4px;gap:4px;border-radius:16px}
+.seg button{font-family:inherit;font-size:13px;font-weight:600;padding:8px 15px;border:none;background:transparent;
+  color:var(--txt-dim);cursor:pointer;border-radius:12px;transition:.22s cubic-bezier(.3,.8,.3,1);white-space:nowrap}
+.seg button.on{color:#fff;background:var(--glass-hi);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 2px 8px rgba(0,0,0,.2)}
+.seg button:active{transform:scale(.95)}
+.spacer{flex:1}
+.selwrap{position:relative;border-radius:16px;overflow:hidden}
+select{font-family:inherit;font-size:13px;font-weight:600;padding:10px 36px 10px 15px;border:none;color:#fff;background:transparent;cursor:pointer;appearance:none;outline:none}
+select option{background:#141a30;color:#fff}
+.selwrap::after{content:"⌄";position:absolute;right:13px;top:46%;transform:translateY(-50%);color:var(--txt-dim);pointer-events:none;font-size:16px}
+
+/* search bar */
+.searchbar{display:flex;gap:10px;align-items:center;margin-bottom:22px}
+.searchwrap{flex:1;position:relative}
+.searchwrap input{width:100%;font-family:inherit;font-size:14px;color:#fff;padding:11px 38px 11px 40px;border:1px solid var(--stroke);border-radius:15px;background:rgba(255,255,255,.05);outline:none}
+.searchwrap input:focus{border-color:var(--stroke-hi);background:rgba(255,255,255,.09)}
+.searchwrap .si{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--txt-faint);font-size:15px;pointer-events:none}
+.searchwrap .sx{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--txt-faint);font-size:16px;background:none;border:none;cursor:pointer;display:none}
+.searchwrap .sx.on{display:block}
+.catfilter{border-radius:15px;overflow:hidden;flex:0 0 auto}
+.catfilter select{padding:11px 34px 11px 14px;font-size:13px}
+
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-bottom:24px}
+.card{padding:16px 16px 14px;position:relative;overflow:hidden}
+.card .lbl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--txt-faint);font-weight:600}
+.card .val{font-size:clamp(18px,4.2vw,26px);font-weight:700;margin-top:8px;letter-spacing:-.02em;line-height:1}
+.card .sub{font-size:12px;color:var(--txt-dim);margin-top:7px}
+.card.exp .val{color:var(--exp)}.card.inc .val{color:var(--inc)}
+.card.net .val.neg{color:var(--exp)}.card.net .val.pos{color:var(--inc)}
+.card .sheen{position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.10),transparent 42%);pointer-events:none}
+
+.sec{margin:28px 0 13px;display:flex;align-items:baseline;gap:11px;padding:0 6px}
+.sec h2{font-size:15px;font-weight:700}.sec .hint{font-size:12px;color:var(--txt-faint)}
+
+.trendbox{padding:18px 14px 13px}
+.trend{display:flex;align-items:flex-end;gap:5px;height:178px}
+.mcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;min-width:0}
+.mbarwrap{width:100%;display:flex;align-items:flex-end;justify-content:center;height:142px}
+.mbar{width:72%;max-width:40px;border-radius:8px 8px 4px 4px;
+  background:linear-gradient(180deg,rgba(123,140,255,.95),rgba(123,140,255,.35));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 0 18px rgba(123,140,255,.25);transition:.45s cubic-bezier(.3,.8,.3,1)}
+.mcol:hover .mbar{background:linear-gradient(180deg,rgba(255,138,107,.95),rgba(255,138,107,.4))}
+.mcol.sel .mbar{background:linear-gradient(180deg,#ffb38a,rgba(255,138,107,.55));box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 0 26px rgba(255,138,107,.5)}
+.mlbl{font-size:10px;color:var(--txt-dim);font-weight:600}.mcol.sel .mlbl{color:#fff}
+.mval{font-size:9px;color:var(--txt-faint)}
+.trend-legend{font-size:12px;color:var(--txt-dim);margin-top:11px;text-align:right;padding-right:4px}
+
+.cats{display:flex;flex-direction:column;gap:10px}
+.catrow{padding:0;overflow:hidden;cursor:pointer;transition:.28s cubic-bezier(.3,.8,.3,1)}
+.catrow.open{border-color:var(--stroke-hi);background:var(--glass-hi)}
+.top{display:flex;align-items:center;gap:12px;padding:15px 16px}
+.dot{width:11px;height:11px;border-radius:50%;flex-shrink:0;box-shadow:0 0 10px currentColor}
+.cname{font-weight:700;font-size:14px;min-width:88px}
+.cnt{font-size:11px;color:var(--txt-dim);background:var(--glass);border:1px solid var(--stroke);padding:2px 8px;border-radius:20px}
+.barwrap{flex:1;height:7px;background:rgba(255,255,255,.08);border-radius:20px;overflow:hidden;min-width:30px}
+.bar{height:100%;border-radius:20px;transition:width .6s cubic-bezier(.2,.7,.2,1);box-shadow:0 0 10px currentColor}
+.camt{font-weight:700;font-size:14px;min-width:88px;text-align:right}
+.cpct{font-size:11px;color:var(--txt-dim);min-width:42px;text-align:right}
+.chev{font-size:12px;color:var(--txt-faint);transition:.3s;width:14px;text-align:center}
+.catrow.open .chev{transform:rotate(90deg);color:var(--txt)}
+.detail{max-height:0;overflow:hidden;transition:max-height .4s cubic-bezier(.3,.8,.3,1)}
+.detail-inner{padding:2px 12px 12px 16px;border-top:1px solid var(--stroke)}
+.txn{display:flex;align-items:center;gap:9px;padding:9px 4px;border-bottom:1px solid rgba(255,255,255,.06);font-size:13px}
+.txn:last-child{border-bottom:none}
+.txn.picked{background:rgba(123,140,255,.14);border-radius:10px}
+.tcheck{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--stroke-hi);flex-shrink:0;display:none;align-items:center;justify-content:center;font-size:12px;color:#fff;cursor:pointer}
+.selmode .tcheck{display:flex}
+.txn.picked .tcheck{background:linear-gradient(145deg,#7b8cff,#d65ad6);border-color:transparent}
+.td{color:var(--txt-faint);font-size:12px;min-width:46px}
+.ts{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tm{font-size:10px;color:var(--txt-dim);border:1px solid var(--stroke);padding:1px 7px;border-radius:20px}
+.ta{font-weight:700;text-align:right;min-width:74px}.ta.neg{color:var(--inc)}
+.txnbtn{background:none;border:none;color:var(--txt-faint);font-size:15px;cursor:pointer;padding:2px 4px;border-radius:8px}
+.selmode .txnbtn{display:none}
+.txnbtn:active{background:var(--glass-hi)}
+
+footer{margin-top:42px;padding:16px 6px 0;border-top:1px solid var(--stroke);font-size:11px;color:var(--txt-faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+
+.fab{position:fixed;right:max(20px,env(safe-area-inset-right));bottom:calc(22px + env(safe-area-inset-bottom));z-index:40;
+  width:60px;height:60px;border-radius:50%;border:1px solid var(--stroke-hi);cursor:pointer;
+  background:linear-gradient(145deg,rgba(123,140,255,.9),rgba(214,90,214,.85));color:#fff;font-size:30px;font-weight:300;
+  box-shadow:0 10px 30px rgba(91,108,255,.45),inset 0 1px 0 rgba(255,255,255,.4);
+  display:flex;align-items:center;justify-content:center;transition:.2s;backdrop-filter:blur(10px)}
+.fab:active{transform:scale(.9)}
+
+/* bulk action bar */
+.bulkbar{position:fixed;left:0;right:0;bottom:0;z-index:42;max-width:560px;margin:0 auto;
+  padding:14px 18px calc(16px + env(safe-area-inset-bottom));border-radius:22px 22px 0 0;
+  display:flex;align-items:center;gap:12px;transform:translateY(120%);transition:transform .32s cubic-bezier(.3,.85,.3,1)}
+.bulkbar.on{transform:translateY(0)}
+.bulkbar .bcount{font-weight:700;font-size:14px;flex:1}
+.bulkbar .bclose{background:none;border:none;color:var(--txt-dim);font-size:14px;cursor:pointer;font-family:inherit}
+
+.scrim{position:fixed;inset:0;z-index:50;background:rgba(5,8,18,.5);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:.3s}
+.scrim.on{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:51;max-width:560px;margin:0 auto;
+  border-radius:26px 26px 0 0;padding:10px 20px calc(24px + env(safe-area-inset-bottom));
+  transform:translateY(110%);transition:transform .36s cubic-bezier(.3,.85,.3,1);max-height:92vh;overflow-y:auto}
+.sheet.on{transform:translateY(0)}
+.grip{width:40px;height:5px;border-radius:3px;background:var(--stroke-hi);margin:6px auto 14px}
+.sheet h3{font-size:18px;font-weight:700;margin-bottom:16px;padding:0 2px}
+.field{margin-bottom:13px}
+.field label{display:block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--txt-faint);font-weight:600;margin-bottom:6px;padding-left:2px}
+.field input,.field select{width:100%;font-family:inherit;font-size:15px;color:#fff;padding:12px 14px;border:1px solid var(--stroke);border-radius:14px;background:rgba(255,255,255,.05);outline:none;appearance:none}
+.field input:focus,.field select:focus{border-color:var(--stroke-hi);background:rgba(255,255,255,.09)}
+.field select option{background:#141a30}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.typeseg{display:flex;gap:8px;margin-bottom:13px}
+.typeseg button{flex:1;font-family:inherit;font-size:14px;font-weight:700;padding:12px;border:1px solid var(--stroke);border-radius:14px;background:rgba(255,255,255,.05);color:var(--txt-dim);cursor:pointer;transition:.2s}
+.typeseg button.on[data-t="支出"]{border-color:var(--exp);color:var(--exp);background:rgba(255,138,107,.12)}
+.typeseg button.on[data-t="収入"]{border-color:var(--inc);color:var(--inc);background:rgba(111,227,176,.12)}
+.sheet-actions{display:flex;gap:11px;margin-top:20px}
+.btn{flex:1;font-family:inherit;font-size:15px;font-weight:700;padding:14px;border-radius:15px;border:1px solid var(--stroke);cursor:pointer;transition:.2s}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:linear-gradient(145deg,rgba(123,140,255,.9),rgba(214,90,214,.8));color:#fff;border-color:transparent;box-shadow:0 6px 18px rgba(91,108,255,.35)}
+.btn.ghost{background:var(--glass);color:var(--txt-dim)}
+.btn.danger{background:rgba(255,90,90,.14);color:#ff9a9a;border-color:rgba(255,90,90,.3);flex:0 0 auto;padding:14px 18px}
+
+.toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translate(-50%,20px);z-index:60;
+  padding:11px 20px;border-radius:14px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:.3s;white-space:nowrap;max-width:90vw;text-align:center}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+@media(max-width:640px){
+  .summary{grid-template-columns:1fr}
+  .cname{min-width:64px;font-size:13px}.camt{min-width:72px}.cpct{display:none}
+  .controls .selwrap{order:3}
+}
+@media(prefers-reduced-motion:reduce){.bg::before,.bg::after{animation:none}*{transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="wrap">
+<header>
+  <div class="eyebrow">Personal Ledger</div>
+  <h1>財務台帳</h1>
+  <div class="range" id="range"></div>
+</header>
+
+<div class="tools">
+  <button class="tool" id="exportBtn">⬆ .md書き出し</button>
+  <button class="tool" id="importBtn">⬇ .md読み込み</button>
+  <button class="tool" id="selBtn">☑ 費目を一括編集</button>
+  <input type="file" id="fileInput" accept=".md,.txt" style="display:none">
+</div>
+
+<div class="controls">
+  <div class="seg glass" id="modeSeg">
+    <button data-mode="month" class="on">月別</button>
+    <button data-mode="all">全期間</button>
+  </div>
+  <div class="spacer"></div>
+  <div class="selwrap glass"><select id="monthSel"></select></div>
+  <div class="seg glass" id="sortSeg">
+    <button data-sort="amt" class="on">金額順</button>
+    <button data-sort="name">名前順</button>
+  </div>
+</div>
+
+<div class="searchbar">
+  <div class="searchwrap glass" style="border-radius:15px">
+    <span class="si">⌕</span>
+    <input type="text" id="search" placeholder="店舗・内容で検索" autocomplete="off">
+    <button class="sx" id="searchClear">✕</button>
+  </div>
+  <div class="catfilter selwrap glass"><select id="catFilter"><option value="">全費目</option></select></div>
+</div>
+
+<div class="summary">
+  <div class="card glass exp"><div class="sheen"></div><div class="lbl">支出</div><div class="val tnum" id="sExp">¥0</div><div class="sub" id="sExpSub"></div></div>
+  <div class="card glass inc"><div class="sheen"></div><div class="lbl">収入</div><div class="val tnum" id="sInc">¥0</div><div class="sub" id="sIncSub"></div></div>
+  <div class="card glass net"><div class="sheen"></div><div class="lbl">収支</div><div class="val tnum" id="sNet">¥0</div><div class="sub" id="sNetSub"></div></div>
+</div>
+
+<div class="sec"><h2>月別支出推移</h2><span class="hint">タップで月選択</span></div>
+<div class="trendbox glass"><div class="trend" id="trend"></div><div class="trend-legend" id="trendLegend"></div></div>
+
+<div class="sec"><h2 id="catTitle">カテゴリ別支出</h2><span class="hint" id="catHint">タップで明細</span></div>
+<div class="cats" id="cats"></div>
+
+<footer>
+  <span id="fcount"></span>
+  <span>端末内に保存・オフライン可</span>
+</footer>
+</div>
+
+<button class="fab" id="fab" aria-label="取引を追加">+</button>
+
+<div class="bulkbar glass" id="bulkbar">
+  <span class="bcount" id="bcount">0件選択</span>
+  <div class="selwrap glass" style="border-radius:13px"><select id="bulkCat"></select></div>
+  <button class="btn primary" id="bulkApply" style="flex:0 0 auto;padding:12px 16px">変更</button>
+  <button class="bclose" id="bulkClose">完了</button>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<div class="sheet glass" id="sheet">
+  <div class="grip"></div>
+  <h3 id="sheetTitle">取引を追加</h3>
+  <div class="typeseg" id="typeSeg">
+    <button data-t="支出" class="on">支出</button>
+    <button data-t="収入">収入</button>
+  </div>
+  <div class="row2">
+    <div class="field"><label>日付</label><input type="date" id="fDate"></div>
+    <div class="field"><label>金額</label><input type="number" id="fAmt" inputmode="numeric" placeholder="0"></div>
+  </div>
+  <div class="field"><label>店舗・内容</label><input type="text" id="fStore" placeholder="例：セブンイレブン"></div>
+  <div class="row2">
+    <div class="field"><label>費目</label><select id="fCat"></select></div>
+    <div class="field"><label>手段</label><select id="fMeans"><option>カード</option><option>現金</option><option>振込</option></select></div>
+  </div>
+  <div class="sheet-actions">
+    <button class="btn danger" id="delBtn" style="display:none">削除</button>
+    <button class="btn ghost" id="cancelBtn">キャンセル</button>
+    <button class="btn primary" id="saveBtn">保存</button>
+  </div>
+</div>
+
+<div class="toast glass" id="toast"></div>
+
+<script>
+const SEED = [];
+const KEY = "zaimu_ledger_dist_v1";
+const CATS_EXP = ["食費","日用品","外食・交際費","交通","住居","通信","医療・健康","衣服・美容","趣味・娯楽","教育","投資","その他"];
+const CATS_INC = ["給与","賞与","副業","その他"];
+const COLORS={"食費":"#7be0a3","外食・交際費":"#ff8a6b","趣味・娯楽":"#c08af0","日用品":"#6cb6ff","交通":"#ffd166","住居":"#a8b0c0","通信":"#5ad0e0","医療・健康":"#ff7aa8","衣服・美容":"#ffae6b","教育":"#7be0d0","投資":"#9ae66e","その他":"#b8b0a0","給与":"#9ae66e","賞与":"#7be0d0","副業":"#6cb6ff"};
+const yen=n=>"¥"+n.toLocaleString("ja-JP");
+
+let DATA=load();
+let state={mode:"month",month:null,sort:"amt",q:"",catf:""};
+let editId=null, formType="支出";
+let selMode=false; let picked=new Set();
+
+function load(){try{const s=localStorage.getItem(KEY);if(s){const a=JSON.parse(s);if(Array.isArray(a))return a;}}catch(e){}return SEED.map((r,i)=>({...r,id:"s"+i}));}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(DATA));}catch(e){toast("保存に失敗しました");}}
+function uid(){return "x"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+const monthsOf=()=>[...new Set(DATA.map(r=>r.date.slice(0,7)))].sort();
+const fmtMonth=m=>m.replace("-","年")+"月";
+
+function rebuildMonths(){
+  const ms=monthsOf();
+  if(!ms.length){state.month=null;}
+  else if(!state.month||!ms.includes(state.month))state.month=ms[ms.length-1];
+  const sel=document.getElementById("monthSel");sel.innerHTML="";
+  ms.forEach(m=>{const o=document.createElement("option");o.value=m;o.textContent=m.replace("-","/");sel.appendChild(o);});
+  if(state.month)sel.value=state.month;
+  document.getElementById("range").textContent=ms.length?`${ms[0].replace("-","年")}月 〜 ${ms[ms.length-1].replace("-","年")}月 ・ 全${DATA.length}件`:"データなし";
+}
+function buildCatFilter(){
+  const sel=document.getElementById("catFilter");const cur=state.catf;
+  const used=[...new Set(DATA.filter(r=>r.type==="支出").map(r=>r.cat))].sort((a,b)=>a.localeCompare(b,"ja"));
+  sel.innerHTML='<option value="">全費目</option>'+used.map(c=>`<option value="${c}">${c}</option>`).join("");
+  sel.value=cur;
+}
+function matchQ(r){
+  if(state.catf&&r.cat!==state.catf)return false;
+  if(state.q){const q=state.q.toLowerCase();if(!(r.store.toLowerCase().includes(q)||r.cat.toLowerCase().includes(q)))return false;}
+  return true;
+}
+const activeRows=()=>{
+  let rows=state.mode==="all"?DATA:DATA.filter(r=>r.date.slice(0,7)===state.month);
+  return rows.filter(matchQ);
+};
+
+function render(){
+  document.getElementById("monthSel").parentElement.style.display=state.mode==="month"?"":"none";
+  const rows=activeRows();
+  const exp=rows.filter(r=>r.type==="支出"), inc=rows.filter(r=>r.type==="収入");
+  const eT=exp.reduce((s,r)=>s+r.amt,0), iT=inc.reduce((s,r)=>s+r.amt,0), net=iT-eT;
+  document.getElementById("sExp").textContent=yen(eT);
+  document.getElementById("sInc").textContent=yen(iT);
+  const ne=document.getElementById("sNet");ne.textContent=(net<0?"−":"+")+yen(Math.abs(net)).slice(1);
+  ne.className="val tnum "+(net<0?"neg":"pos");
+  document.getElementById("sExpSub").textContent=exp.length+"件";
+  document.getElementById("sIncSub").textContent=inc.length+"件";
+  const scope=(state.mode==="all"?"全期間":(state.month?fmtMonth(state.month):"—"));
+  const filt=(state.q||state.catf)?"（絞込）":"";
+  document.getElementById("sNetSub").textContent=scope+filt;
+  document.getElementById("catTitle").textContent=scope+" のカテゴリ別支出";
+  document.getElementById("fcount").textContent="表示中 "+rows.length+"件";
+
+  const byCat={};
+  exp.forEach(r=>{(byCat[r.cat]=byCat[r.cat]||[]).push(r);});
+  let cats=Object.keys(byCat).map(c=>({cat:c,total:byCat[c].reduce((s,r)=>s+r.amt,0),items:byCat[c].slice().sort((a,b)=>a.date<b.date?1:-1),n:byCat[c].length}));
+  cats.sort(state.sort==="amt"?(a,b)=>b.total-a.total:(a,b)=>a.cat.localeCompare(b.cat,"ja"));
+  const max=Math.max(1,...cats.map(c=>c.total));
+  const C=document.getElementById("cats");
+  const openSet=new Set([...C.querySelectorAll(".catrow.open")].map(e=>e.dataset.cat));
+  if(selMode||state.q||state.catf)cats.forEach(c=>openSet.add(c.cat));
+  C.innerHTML="";C.classList.toggle("selmode",selMode);
+  if(!cats.length){C.innerHTML='<div class="glass" style="padding:26px 22px;text-align:center;color:var(--txt-dim);line-height:1.9">まだ取引がありません。<br>右下の <b style="color:#fff">＋</b> ボタンから最初の取引を追加するか、<br>「⬇ .md読み込み」で既存の台帳を取り込めます。</div>';}
+  cats.forEach(c=>{
+    const pct=eT?c.total/eT*100:0, col=COLORS[c.cat]||"#b8b0a0";
+    const row=document.createElement("div");row.className="catrow glass";row.dataset.cat=c.cat;
+    row.innerHTML=`<div class="top">
+        <span class="dot" style="background:${col};color:${col}"></span>
+        <span class="cname">${c.cat}</span><span class="cnt">${c.n}</span>
+        <div class="barwrap"><div class="bar" style="width:${c.total/max*100}%;background:${col};color:${col}"></div></div>
+        <span class="camt tnum">${yen(c.total)}</span><span class="cpct tnum">${pct.toFixed(1)}%</span>
+        <span class="chev">▶</span></div>
+      <div class="detail"><div class="detail-inner">
+        ${c.items.map(it=>`<div class="txn ${picked.has(it.id)?'picked':''}" data-id="${it.id}">
+          <span class="tcheck">✓</span>
+          <span class="td tnum">${it.date.slice(5).replace("-","/")}</span>
+          <span class="ts">${esc(it.store)}</span>
+          <span class="tm">${it.means}</span>
+          <span class="ta tnum ${it.amt<0?'neg':''}">${yen(it.amt)}</span>
+          <button class="txnbtn" data-edit="${it.id}">✎</button></div>`).join("")}
+      </div></div>`;
+    const det=row.querySelector(".detail");
+    row.querySelector(".top").addEventListener("click",()=>{const o=row.classList.toggle("open");det.style.maxHeight=o?det.firstElementChild.scrollHeight+"px":"0";});
+    if(openSet.has(c.cat)){row.classList.add("open");requestAnimationFrame(()=>det.style.maxHeight=det.firstElementChild.scrollHeight+"px");}
+    row.querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",e=>{e.stopPropagation();openSheet(b.dataset.edit);}));
+    row.querySelectorAll(".txn").forEach(t=>t.addEventListener("click",e=>{
+      if(!selMode)return; e.stopPropagation();
+      const id=t.dataset.id; if(picked.has(id)){picked.delete(id);t.classList.remove("picked");}else{picked.add(id);t.classList.add("picked");}
+      updateBulk();
+    }));
+    C.appendChild(row);
+  });
+}
+function esc(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+
+function renderTrend(){
+  const ms=monthsOf();
+  const mt=ms.map(m=>({m,total:DATA.filter(r=>r.type==="支出"&&r.date.slice(0,7)===m).reduce((s,r)=>s+r.amt,0)}));
+  const max=Math.max(1,...mt.map(x=>x.total));
+  const t=document.getElementById("trend");t.innerHTML="";
+  mt.forEach(x=>{
+    const col=document.createElement("div");col.className="mcol"+(state.mode==="month"&&x.m===state.month?" sel":"");
+    col.innerHTML=`<div class="mbarwrap"><div class="mbar" style="height:${x.total/max*100}%"></div></div>
+      <div class="mlbl">${x.m.slice(2).replace("-","/")}</div><div class="mval tnum">${(x.total/10000).toFixed(0)}万</div>`;
+    col.addEventListener("click",()=>{state.mode="month";state.month=x.m;document.getElementById("monthSel").value=x.m;
+      document.querySelectorAll("#modeSeg button").forEach(b=>b.classList.toggle("on",b.dataset.mode==="month"));update();});
+    t.appendChild(col);
+  });
+  const avg=mt.length?mt.reduce((s,x)=>s+x.total,0)/mt.length:0;
+  document.getElementById("trendLegend").textContent="月平均支出 "+yen(Math.round(avg));
+}
+function update(){rebuildMonths();buildCatFilter();renderTrend();render();}
+
+/* bulk edit */
+function setSelMode(on){selMode=on;picked.clear();
+  document.getElementById("selBtn").textContent=on?"× 選択をやめる":"☑ 費目を一括編集";
+  document.getElementById("catHint").textContent=on?"取引をタップで選択":"タップで明細";
+  document.getElementById("bulkbar").classList.toggle("on",on);
+  if(on){const sel=document.getElementById("bulkCat");sel.innerHTML=CATS_EXP.map(c=>`<option>${c}</option>`).join("");}
+  updateBulk();render();
+}
+function updateBulk(){document.getElementById("bcount").textContent=picked.size+"件選択";}
+function applyBulk(){
+  if(!picked.size){toast("取引を選択してください");return;}
+  const cat=document.getElementById("bulkCat").value;
+  let n=0;DATA.forEach(r=>{if(picked.has(r.id)){r.cat=cat;n++;}});
+  save();toast(n+"件を「"+cat+"」に変更");picked.clear();updateBulk();update();
+}
+
+/* sheet */
+const scrim=document.getElementById("scrim"),sheet=document.getElementById("sheet");
+function fillCats(){const sel=document.getElementById("fCat");const list=formType==="支出"?CATS_EXP:CATS_INC;sel.innerHTML=list.map(c=>`<option>${c}</option>`).join("");}
+function setType(t){formType=t;document.querySelectorAll("#typeSeg button").forEach(b=>b.classList.toggle("on",b.dataset.t===t));fillCats();}
+function openSheet(id){
+  editId=id||null;
+  document.getElementById("sheetTitle").textContent=id?"取引を編集":"取引を追加";
+  document.getElementById("delBtn").style.display=id?"":"none";
+  if(id){const r=DATA.find(x=>x.id===id);setType(r.type);document.getElementById("fDate").value=r.date;
+    document.getElementById("fAmt").value=r.amt;document.getElementById("fStore").value=r.store;
+    document.getElementById("fCat").value=r.cat;document.getElementById("fMeans").value=r.means;}
+  else{setType("支出");document.getElementById("fDate").value=new Date().toISOString().slice(0,10);
+    document.getElementById("fAmt").value="";document.getElementById("fStore").value="";document.getElementById("fMeans").value="カード";}
+  scrim.classList.add("on");sheet.classList.add("on");
+}
+function closeSheet(){scrim.classList.remove("on");sheet.classList.remove("on");editId=null;}
+function saveTxn(){
+  const date=document.getElementById("fDate").value;
+  const amt=parseInt(document.getElementById("fAmt").value,10);
+  const store=document.getElementById("fStore").value.trim();
+  const cat=document.getElementById("fCat").value;const means=document.getElementById("fMeans").value;
+  if(!date){toast("日付を入力してください");return;}
+  if(isNaN(amt)){toast("金額を入力してください");return;}
+  if(!store){toast("店舗・内容を入力してください");return;}
+  if(editId){const r=DATA.find(x=>x.id===editId);Object.assign(r,{date,type:formType,store,cat,amt,means});toast("更新しました");}
+  else{DATA.push({id:uid(),date,type:formType,store,cat,amt,means});toast("追加しました");state.month=date.slice(0,7);state.mode="month";document.querySelectorAll("#modeSeg button").forEach(b=>b.classList.toggle("on",b.dataset.mode==="month"));}
+  save();closeSheet();update();
+}
+function delTxn(){if(!editId)return;if(!confirm("この取引を削除しますか？"))return;DATA=DATA.filter(x=>x.id!==editId);save();closeSheet();toast("削除しました");update();}
+
+/* export / import with append + dedupe */
+function buildMD(){
+  const head=`# 財務台帳
+
+## このファイルの使い方 / AIへの運用指示
+
+このファイルは個人の財務管理台帳です。チャットにこのファイル（または中身全文）を貼り付けたら、AIは内容を読み取り適切なカテゴリへ分類して取引テーブル末尾に追記し、更新版.mdを出力する運用とする。
+
+## 台帳フォーマット
+
+|列|説明|
+|--|--|
+|日付|YYYY-MM-DD。カード支出は利用日で計上|
+|種別|収入 / 支出|
+|店舗・内容|店名や取引内容|
+|費目|カテゴリ一覧から選ぶ|
+|金額|数値。返品・マイナスはマイナス金額で計上し相殺|
+|手段|カード / 現金 / 振込 など|
+
+## カテゴリ一覧（現在使用中）
+
+**支出:** ${CATS_EXP.join(" / ")}
+
+**収入:** ${CATS_INC.join(" / ")}
+
+-----
+
+## 取引データ
+
+|日付|種別|店舗・内容|費目|金額|手段|
+|--|--|--|--|--|--|
+`;
+  const sorted=DATA.slice().sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);
+  return head+sorted.map(r=>`|${r.date}|${r.type}|${r.store}|${r.cat}|${r.amt.toLocaleString("en-US")}|${r.means}|`).join("\n")+"\n";
+}
+function exportMD(){
+  const blob=new Blob([buildMD()],{type:"text/markdown"});const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");a.href=url;a.download="財務台帳.md";document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);toast(".mdを書き出しました");
+}
+function parseMD(text){
+  const out=[];text.split(/\r?\n/).forEach(line=>{line=line.trim();if(!line.startsWith("|2"))return;
+    const p=line.replace(/^\|/,"").replace(/\|$/,"").split("|").map(s=>s.trim());
+    if(p.length<6)return;const[d,t,store,cat,amt,means]=p;
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(d))return;
+    out.push({date:d,type:t,store,cat,amt:parseInt(amt.replace(/,/g,""),10),means});});return out;
+}
+const sig=r=>`${r.date}|${r.type}|${r.store}|${r.amt}`;
+function importMD(file){
+  const r=new FileReader();
+  r.onload=()=>{const rows=parseMD(r.result);
+    if(!rows.length){toast("取引が見つかりませんでした");return;}
+    const existing=new Set(DATA.map(sig));
+    const fresh=rows.filter(x=>!existing.has(sig(x)));
+    const dup=rows.length-fresh.length;
+    let msg=`${rows.length}件中、新規${fresh.length}件`;
+    if(dup>0)msg+=`（重複${dup}件はスキップ）`;
+    msg+="を追記します。よろしいですか？\n\n［キャンセル］→ 現在のデータを全て置き換え";
+    const append=confirm(msg);
+    if(append){if(!fresh.length){toast("新規データはありませんでした");return;}fresh.forEach(x=>DATA.push({...x,id:uid()}));toast(fresh.length+"件を追記しました");}
+    else{DATA=rows.map(x=>({...x,id:uid()}));toast(rows.length+"件で置き換えました");}
+    save();state.month=null;update();};
+  r.onerror=()=>toast("読み込みに失敗しました");r.readAsText(file);
+}
+
+let toastT;function toast(msg){const el=document.getElementById("toast");el.textContent=msg;el.classList.add("on");clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove("on"),2200);}
+
+/* events */
+document.querySelectorAll("#modeSeg button").forEach(b=>b.addEventListener("click",()=>{state.mode=b.dataset.mode;document.querySelectorAll("#modeSeg button").forEach(x=>x.classList.toggle("on",x===b));update();}));
+document.querySelectorAll("#sortSeg button").forEach(b=>b.addEventListener("click",()=>{state.sort=b.dataset.sort;document.querySelectorAll("#sortSeg button").forEach(x=>x.classList.toggle("on",x===b));render();}));
+document.getElementById("monthSel").addEventListener("change",e=>{state.month=e.target.value;update();});
+const searchEl=document.getElementById("search");
+searchEl.addEventListener("input",e=>{state.q=e.target.value.trim();document.getElementById("searchClear").classList.toggle("on",!!state.q);render();});
+document.getElementById("searchClear").addEventListener("click",()=>{searchEl.value="";state.q="";document.getElementById("searchClear").classList.remove("on");render();});
+document.getElementById("catFilter").addEventListener("change",e=>{state.catf=e.target.value;render();});
+document.getElementById("fab").addEventListener("click",()=>openSheet(null));
+document.getElementById("cancelBtn").addEventListener("click",closeSheet);
+document.getElementById("scrim").addEventListener("click",closeSheet);
+document.getElementById("saveBtn").addEventListener("click",saveTxn);
+document.getElementById("delBtn").addEventListener("click",delTxn);
+document.querySelectorAll("#typeSeg button").forEach(b=>b.addEventListener("click",()=>setType(b.dataset.t)));
+document.getElementById("exportBtn").addEventListener("click",exportMD);
+document.getElementById("importBtn").addEventListener("click",()=>document.getElementById("fileInput").click());
+document.getElementById("fileInput").addEventListener("change",e=>{if(e.target.files[0])importMD(e.target.files[0]);e.target.value="";});
+document.getElementById("selBtn").addEventListener("click",()=>setSelMode(!selMode));
+document.getElementById("bulkClose").addEventListener("click",()=>setSelMode(false));
+document.getElementById("bulkApply").addEventListener("click",applyBulk);
+
+update();
+</script>
+</body>
+</html>
