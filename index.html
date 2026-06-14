@@ -26,7 +26,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px soli
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
 }
-html,body{height:100%}
+html,body{height:100%;touch-action:manipulation}
 body{font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN",-apple-system,BlinkMacSystemFont,"SF Pro JP","Yu Gothic",Meiryo,sans-serif;
   color:var(--txt);background:#0a0e1a;-webkit-font-smoothing:antialiased;line-height:1.5;overflow-x:hidden}
 .bg{position:fixed;inset:0;z-index:-2;overflow:hidden;background:
@@ -1307,6 +1307,33 @@ window.addEventListener("orientationchange",()=>setTimeout(()=>{setTrack(TAB_ORD
       onOk:()=>exportMD()
     });
   },1400);
+})();
+
+/* iOS Safariはviewportのuser-scalable=noを無視するため、JSでズームを抑止する。
+   通常のスクロール・スワイプ・操作には影響しないよう、拡大ジェスチャーのみを止める。 */
+(function preventZoom(){
+  // ピンチズーム（Safariのgestureイベント）
+  ["gesturestart","gesturechange","gestureend"].forEach(ev=>{
+    document.addEventListener(ev,e=>e.preventDefault(),{passive:false});
+  });
+  // 2本指タッチでの拡大
+  document.addEventListener("touchmove",e=>{
+    if(e.touches&&e.touches.length>1)e.preventDefault();
+  },{passive:false});
+  // ダブルタップ拡大（touch-action:manipulationの保険）。
+  // 同じ位置への素早い2連続タップのみ抑止し、別要素への連打は通常通り動作させる。
+  let lastTouch=0,lastX=0,lastY=0;
+  document.addEventListener("touchend",e=>{
+    const now=Date.now();
+    const t=e.changedTouches&&e.changedTouches[0];
+    const x=t?t.clientX:0,y=t?t.clientY:0;
+    if(now-lastTouch<=300&&Math.abs(x-lastX)<30&&Math.abs(y-lastY)<30)e.preventDefault();
+    lastTouch=now;lastX=x;lastY=y;
+  },{passive:false});
+  // ピンチ拡大のホイール版（トラックパッド等）
+  document.addEventListener("wheel",e=>{
+    if(e.ctrlKey)e.preventDefault();
+  },{passive:false});
 })();
 </script>
 </body>
