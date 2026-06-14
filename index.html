@@ -820,7 +820,16 @@ function fitViewport(duringDrag){
     vp.style.height=h+"px";
   }else{
     const p=document.getElementById("panel-"+state.tab);
-    vp.style.height=(p?p.scrollHeight:0)+"px";
+    let h=p?p.scrollHeight:0;
+    // 短いパネル（明細・操作など）でビューポートが縮みすぎ、
+    // 固定タブバーとの間に隙間ができて“浮いて”見えるのを防ぐ最小高さ。
+    // 端末差をなくすため固定値ではなく実測値から算出する。
+    const bar=document.getElementById("tabbar");
+    const top=vp.getBoundingClientRect().top;          // ビューポート上端のY
+    const barH=bar?bar.getBoundingClientRect().height:0;// タブバー実高さ（safe-area込み）
+    const minH=window.innerHeight-top-barH;            // 上端〜タブバー上端ぶんを確保
+    if(minH>h)h=minH;
+    vp.style.height=h+"px";
   }
 }
 function update(){rebuildMonths();rebuildYears();buildCatFilter();renderTrend();renderYearSummary();render();renderQF();}
