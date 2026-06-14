@@ -31,7 +31,7 @@ body{font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN",-apple-system,Blink
 .bg::after{width:42vw;height:42vw;right:-10vw;bottom:-8vw;background:radial-gradient(circle,#d65ad6,transparent 70%);animation:d2 26s ease-in-out infinite}
 @keyframes d1{0%,100%{transform:translate(0,0)}50%{transform:translate(6vw,5vw)}}
 @keyframes d2{0%,100%{transform:translate(0,0)}50%{transform:translate(-5vw,-4vw)}}
-.wrap{max-width:920px;margin:0 auto;padding:max(24px,env(safe-area-inset-top)) 18px calc(96px + env(safe-area-inset-bottom))}
+.wrap{max-width:920px;margin:0 auto;padding:max(24px,env(safe-area-inset-top)) 18px calc(150px + env(safe-area-inset-bottom))}
 .glass{background:var(--glass);border:1px solid var(--stroke);border-radius:var(--r);
   backdrop-filter:blur(26px) saturate(160%);-webkit-backdrop-filter:blur(26px) saturate(160%);
   box-shadow:0 8px 32px rgba(0,0,0,.30),inset 0 1px 0 rgba(255,255,255,.18),inset 0 -1px 0 rgba(0,0,0,.12)}
@@ -53,6 +53,7 @@ h1{font-size:clamp(24px,6vw,36px);font-weight:700;letter-spacing:-.02em;margin-t
   color:var(--txt-dim);cursor:pointer;border-radius:12px;transition:.22s cubic-bezier(.3,.8,.3,1);white-space:nowrap}
 .seg button.on{color:#fff;background:var(--glass-hi);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 2px 8px rgba(0,0,0,.2)}
 .seg button:active{transform:scale(.95)}
+.seg.dragging button:active{transform:none}
 .spacer{flex:1}
 .selwrap{position:relative;border-radius:16px;overflow:hidden}
 select{font-family:inherit;font-size:13px;font-weight:600;padding:10px 36px 10px 15px;border:none;color:#fff;background:transparent;cursor:pointer;appearance:none;outline:none}
@@ -91,8 +92,15 @@ select option{background:#141a30;color:#fff}
   box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 0 18px rgba(123,140,255,.25);transition:.45s cubic-bezier(.3,.8,.3,1)}
 .mcol:hover .mbar{background:linear-gradient(180deg,rgba(255,138,107,.95),rgba(255,138,107,.4))}
 .mcol.sel .mbar{background:linear-gradient(180deg,#ffb38a,rgba(255,138,107,.55));box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 0 26px rgba(255,138,107,.5)}
-.mlbl{font-size:10px;color:var(--txt-dim);font-weight:600}.mcol.sel .mlbl{color:#fff}
-.mval{font-size:9px;color:var(--txt-faint)}
+.mlbl{font-size:10px;color:var(--txt-dim);font-weight:600;white-space:nowrap}.mcol.sel .mlbl{color:#fff}
+.mval{font-size:9px;color:var(--txt-faint);white-space:nowrap}
+/* 列が多いときはラベルを縦書き気味に小さく、金額は隠す */
+.trend.dense{gap:3px;height:186px}
+.trend.dense .mbarwrap{height:134px}
+.trend.dense .mbar{max-width:24px}
+.trend.dense .mlbl{font-size:9px;transform:rotate(-45deg);transform-origin:center;margin-top:6px}
+.trend.dense .mval{display:none}
+.trend.hidelabel .mlbl{display:none}
 .trend-legend{font-size:12px;color:var(--txt-dim);margin-top:11px;text-align:right;padding-right:4px}
 
 .cats{display:flex;flex-direction:column;gap:10px}
@@ -126,7 +134,44 @@ select option{background:#141a30;color:#fff}
 
 footer{margin-top:42px;padding:16px 6px 0;border-top:1px solid var(--stroke);font-size:11px;color:var(--txt-faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
 
-.fab{position:fixed;right:max(20px,env(safe-area-inset-right));bottom:calc(22px + env(safe-area-inset-bottom));z-index:40;
+/* 下部タブバー */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:41;
+  max-width:560px;margin:0 auto;border-radius:24px 24px 0 0;
+  display:flex;padding:8px 8px calc(8px + env(safe-area-inset-bottom));gap:4px}
+.tabbtn{flex:1;position:relative;z-index:1;font-family:inherit;background:transparent;border:none;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 4px;border-radius:16px;
+  color:var(--txt-dim);transition:background .22s ease,color .22s ease,box-shadow .22s ease,transform .12s ease}
+.tabbtn .ti{font-size:19px;line-height:1;filter:grayscale(.3);opacity:.7;transition:.2s}
+.tabbtn .tl{font-size:11px;font-weight:600;letter-spacing:.02em}
+.tabbtn.on{color:#fff;background:var(--glass-hi);box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 2px 10px rgba(0,0,0,.2)}
+.tabbtn.on .ti{filter:none;opacity:1}
+.tabbtn:active{transform:scale(.94)}
+/* なぞり中は各ボタンの押し込み縮小を無効化（通過時のガタつき防止） */
+.tabbar.dragging .tabbtn:active{transform:none}
+.tabbar.dragging .tabbtn{transition:background .18s ease,color .18s ease,box-shadow .18s ease}
+.tabpanel{animation:fadeIn .28s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+/* カルーセル：3パネル横並び＋ドラッグ追従 */
+.viewport{overflow:hidden;margin:0 -18px;padding:0;transition:height .3s cubic-bezier(.25,.8,.3,1)}
+.viewport.dragging{transition:none}
+.track{display:flex;width:300%;will-change:transform}
+.track.animating{transition:transform .3s cubic-bezier(.25,.8,.3,1)}
+.track .tabpanel{width:calc(100%/3);flex:0 0 calc(100%/3);padding:0 18px;animation:none;
+  align-self:flex-start}
+/* スワイプ追従 */
+.tabpanel.dragging{animation:none;transition:none;will-change:transform}
+.tabpanel.snapping{animation:none;transition:transform .26s cubic-bezier(.25,.8,.3,1),opacity .26s ease}
+@keyframes slideInL{from{transform:translateX(34px);opacity:0}to{transform:none;opacity:1}}
+@keyframes slideInR{from{transform:translateX(-34px);opacity:0}to{transform:none;opacity:1}}
+.tabpanel.in-left{animation:slideInL .26s cubic-bezier(.25,.8,.3,1)}
+.tabpanel.in-right{animation:slideInR .26s cubic-bezier(.25,.8,.3,1)}
+/* スワイプ可能なことを示す“引っかかり”ヒント（端で軽く光る） */
+.edge-hint{position:fixed;top:0;bottom:0;width:40px;z-index:39;pointer-events:none;opacity:0;transition:opacity .2s}
+.edge-hint.left{left:0;background:linear-gradient(90deg,rgba(123,140,255,.25),transparent)}
+.edge-hint.right{right:0;background:linear-gradient(270deg,rgba(214,90,214,.25),transparent)}
+.edge-hint.on{opacity:1}
+
+.fab{position:fixed;right:max(20px,env(safe-area-inset-right));bottom:calc(86px + env(safe-area-inset-bottom));z-index:40;
   width:60px;height:60px;border-radius:50%;border:1px solid var(--stroke-hi);cursor:pointer;
   background:linear-gradient(145deg,rgba(123,140,255,.9),rgba(214,90,214,.85));color:#fff;font-size:30px;font-weight:300;
   box-shadow:0 10px 30px rgba(91,108,255,.45),inset 0 1px 0 rgba(255,255,255,.4);
@@ -178,6 +223,30 @@ footer{margin-top:42px;padding:16px 6px 0;border-top:1px solid var(--stroke);fon
 .toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translate(-50%,20px);z-index:60;
   padding:11px 20px;border-radius:14px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:.3s;white-space:nowrap;max-width:90vw;text-align:center}
 .toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* AI読み取り */
+.ai-note{font-size:12.5px;color:var(--txt-dim);line-height:1.7;margin-bottom:16px;padding:0 2px}
+#aiInput{width:100%;font-family:inherit;font-size:14px;color:#fff;padding:12px 14px;border:1px solid var(--stroke);border-radius:14px;background:rgba(255,255,255,.05);outline:none;resize:vertical;line-height:1.6}
+#aiInput:focus{border-color:var(--stroke-hi);background:rgba(255,255,255,.09)}
+.ai-status{font-size:12.5px;color:var(--txt-dim);margin:10px 2px 0;min-height:18px;line-height:1.5}
+.ai-progress{height:6px;border-radius:20px;background:rgba(255,255,255,.08);overflow:hidden;margin:8px 2px 0;opacity:0;transition:opacity .2s}
+.ai-progress.on{opacity:1}
+.ai-progress-bar{height:100%;width:0;border-radius:20px;background:linear-gradient(90deg,#7b8cff,#d65ad6);transition:width .3s}
+.ai-result-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:12px;padding:0 2px;flex-wrap:wrap}
+#aiResultCount{font-weight:700;font-size:14px}
+.ai-rows{display:flex;flex-direction:column;gap:8px;max-height:46vh;overflow-y:auto;margin-bottom:6px}
+.ai-row{display:flex;flex-direction:column;gap:7px;padding:9px;border:1px solid var(--stroke);border-radius:13px;background:rgba(255,255,255,.04)}
+.ai-row input,.ai-row select{font-family:inherit;font-size:12.5px;color:#fff;padding:7px 8px;border:1px solid var(--stroke);border-radius:9px;background:rgba(255,255,255,.05);outline:none;min-width:0;appearance:none}
+.ai-row select option{background:#141a30}
+.ai-row-top{display:flex;gap:7px;align-items:center}
+.ai-row-top .air-date{flex:0 0 104px}
+.ai-row-top .air-type{flex:0 0 72px}
+.ai-row-top .air-store{flex:1}
+.ai-row-top .air-del{flex:0 0 auto;background:none;border:none;color:var(--txt-faint);font-size:16px;cursor:pointer;padding:2px 6px}
+.ai-row-mid{display:flex;gap:7px}
+.ai-row-mid .air-cat{flex:1}
+.ai-row-mid .air-amt{flex:0 0 92px;text-align:right}
+.ai-row-mid .air-means{flex:0 0 78px}
 
 /* delta (前月比) */
 .delta{font-size:11px;font-weight:700;margin-left:7px;padding:1px 7px;border-radius:20px;vertical-align:middle;white-space:nowrap}
@@ -245,13 +314,7 @@ footer{margin-top:42px;padding:16px 6px 0;border-top:1px solid var(--stroke);fon
   <div class="range" id="range"></div>
 </header>
 
-<div class="tools">
-  <button class="tool" id="exportBtn">⬆ .md書き出し</button>
-  <button class="tool" id="importBtn">⬇ .md読み込み</button>
-  <button class="tool" id="selBtn">☑ 費目を一括編集</button>
-  <input type="file" id="fileInput" accept=".md,.txt" style="display:none">
-</div>
-
+<!-- 全タブ共通：表示モード切替 -->
 <div class="controls">
   <div class="seg glass" id="modeSeg">
     <button data-mode="month" class="on">月別</button>
@@ -261,62 +324,93 @@ footer{margin-top:42px;padding:16px 6px 0;border-top:1px solid var(--stroke);fon
   <div class="spacer"></div>
   <div class="selwrap glass" id="monthSelWrap"><select id="monthSel"></select></div>
   <div class="selwrap glass" id="yearSelWrap" style="display:none"><select id="yearSel"></select></div>
-  <div class="seg glass" id="sortSeg">
-    <button data-sort="amt" class="on">金額順</button>
-    <button data-sort="name">名前順</button>
+</div>
+
+<!-- カルーセル：3パネルを横並びにしてドラッグ追従 -->
+<div class="viewport" id="viewport">
+<div class="track" id="track">
+
+<!-- タブ1：サマリー -->
+<section class="tabpanel" id="panel-summary">
+  <div class="summary">
+    <div class="card glass exp"><div class="sheen"></div><div class="lbl">支出</div><div class="val tnum" id="sExp">¥0</div><div class="sub" id="sExpSub"></div></div>
+    <div class="card glass inc"><div class="sheen"></div><div class="lbl">収入</div><div class="val tnum" id="sInc">¥0</div><div class="sub" id="sIncSub"></div></div>
+    <div class="card glass net"><div class="sheen"></div><div class="lbl">収支</div><div class="val tnum" id="sNet">¥0</div><div class="sub" id="sNetSub"></div></div>
   </div>
-</div>
+  <div class="cats" id="cats-summary"></div>
+</section>
 
-<div class="searchbar">
-  <div class="searchwrap glass" style="border-radius:15px">
-    <span class="si">⌕</span>
-    <input type="text" id="search" placeholder="店舗・内容で検索" autocomplete="off">
-    <button class="sx" id="searchClear">✕</button>
+<!-- タブ2：推移・分析 -->
+<section class="tabpanel" id="panel-analysis">
+  <div class="sec"><h2>月別支出推移</h2><span class="hint">タップで月選択</span></div>
+  <div class="trendbox glass"><div class="trend" id="trend"></div><div class="trend-legend" id="trendLegend"></div></div>
+
+  <div id="yearSummary" style="display:none">
+    <div class="sec"><h2 id="yearTitle">年間サマリー</h2><span class="hint">タップで月へ</span></div>
+    <div class="yearbox glass">
+      <div class="ygrid" id="yGrid"></div>
+      <div class="ymonths" id="yMonths"></div>
+    </div>
   </div>
-  <div class="catfilter selwrap glass"><select id="catFilter"><option value="">全費目</option></select></div>
-</div>
 
-<div class="qfbar" id="qfbar"></div>
-
-<div class="summary">
-  <div class="card glass exp"><div class="sheen"></div><div class="lbl">支出</div><div class="val tnum" id="sExp">¥0</div><div class="sub" id="sExpSub"></div></div>
-  <div class="card glass inc"><div class="sheen"></div><div class="lbl">収入</div><div class="val tnum" id="sInc">¥0</div><div class="sub" id="sIncSub"></div></div>
-  <div class="card glass net"><div class="sheen"></div><div class="lbl">収支</div><div class="val tnum" id="sNet">¥0</div><div class="sub" id="sNetSub"></div></div>
-</div>
-
-<div class="sec"><h2>月別支出推移</h2><span class="hint">タップで月選択</span></div>
-<div class="trendbox glass"><div class="trend" id="trend"></div><div class="trend-legend" id="trendLegend"></div></div>
-
-<div id="yearSummary" style="display:none">
-  <div class="sec"><h2 id="yearTitle">年間サマリー</h2><span class="hint">タップで月へ</span></div>
-  <div class="yearbox glass">
-    <div class="ygrid" id="yGrid"></div>
-    <div class="ymonths" id="yMonths"></div>
+  <div class="searchbar">
+    <div class="searchwrap glass" style="border-radius:15px">
+      <span class="si">⌕</span>
+      <input type="text" id="search" placeholder="店舗・内容で検索" autocomplete="off">
+      <button class="sx" id="searchClear">✕</button>
+    </div>
+    <div class="catfilter selwrap glass"><select id="catFilter"><option value="">全費目</option></select></div>
   </div>
-</div>
+  <div class="qfbar" id="qfbar"></div>
 
-<div class="sec">
-  <h2 id="catTitle">カテゴリ別支出</h2>
-  <span class="hint" id="catHint">タップで明細</span>
-</div>
-<div class="minirow">
-  <div class="seg mini glass" id="axisSeg">
-    <button data-axis="cat" class="on">費目別</button>
-    <button data-axis="means">手段別</button>
+  <div class="sec">
+    <h2 id="catTitle">カテゴリ別支出</h2>
+    <span class="hint" id="catHint">タップで明細</span>
   </div>
-  <div class="seg mini glass" id="chartSeg">
-    <button data-chart="bar" class="on">バー</button>
-    <button data-chart="donut">円</button>
+  <div class="minirow">
+    <div class="seg mini glass" id="axisSeg">
+      <button data-axis="cat" class="on">費目別</button>
+      <button data-axis="means">手段別</button>
+    </div>
+    <div class="seg mini glass" id="chartSeg">
+      <button data-chart="bar" class="on">バー</button>
+      <button data-chart="donut">円</button>
+    </div>
   </div>
-</div>
-<div class="chartbox glass" id="donutBox" style="display:none"></div>
-<div class="cats" id="cats"></div>
+  <div class="chartbox glass" id="donutBox" style="display:none"></div>
+  <div class="cats" id="cats-analysis"></div>
+</section>
+
+<!-- タブ3：明細・操作 -->
+<section class="tabpanel" id="panel-manage">
+  <div class="tools">
+    <button class="tool" id="aiBtn">🤖 AIで読み取り</button>
+    <button class="tool" id="exportBtn">⬆ .md書き出し</button>
+    <button class="tool" id="importBtn">⬇ .md読み込み</button>
+    <button class="tool" id="selBtn">☑ 費目を一括編集</button>
+    <input type="file" id="fileInput" accept=".md,.txt" style="display:none">
+  </div>
+  <div class="cats" id="cats-manage"></div>
+</section>
+
+</div><!-- /track -->
+</div><!-- /viewport -->
 
 <footer>
   <span id="fcount"></span>
   <span>端末内に保存・オフライン可</span>
 </footer>
 </div>
+
+<!-- 下部タブバー -->
+<div class="edge-hint left" id="edgeL"></div>
+<div class="edge-hint right" id="edgeR"></div>
+
+<nav class="tabbar glass" id="tabbar">
+  <button class="tabbtn on" data-tab="summary"><span class="ti">▣</span><span class="tl">サマリー</span></button>
+  <button class="tabbtn" data-tab="analysis"><span class="ti">📈</span><span class="tl">推移・分析</span></button>
+  <button class="tabbtn" data-tab="manage"><span class="ti">≡</span><span class="tl">明細・操作</span></button>
+</nav>
 
 <button class="fab" id="fab" aria-label="取引を追加">+</button>
 
@@ -364,6 +458,37 @@ footer{margin-top:42px;padding:16px 6px 0;border-top:1px solid var(--stroke);fon
 
 <div class="toast glass" id="toast"></div>
 
+<!-- AI読み取りシート -->
+<div class="scrim" id="aiScrim"></div>
+<div class="sheet glass" id="aiSheet">
+  <div class="grip"></div>
+  <h3>🤖 AIで明細・レシートを読み取り</h3>
+  <p class="ai-note">クレカ明細やレシートの内容を貼り付けると、AIが端末内で取引を抽出・分類します。すべてこの端末の中だけで処理され、外部に送信されません。</p>
+
+  <div id="aiSetup">
+    <button class="btn ghost" id="aiPickFile" style="width:100%;margin-bottom:12px">📄 PDFファイルを選択</button>
+    <input type="file" id="aiFileInput" accept=".pdf,application/pdf" style="display:none">
+    <div class="field"><label>読み取り内容（貼り付け・編集も可）</label>
+      <textarea id="aiInput" rows="7" placeholder="例：&#10;2025/05/10 セブンイレブン 540円&#10;2025/05/11 JR東日本 660円&#10;2025/05/12 Amazon 3,200円&#10;&#10;またはPDFを選択すると内容がここに読み込まれます"></textarea>
+    </div>
+    <div class="ai-status" id="aiStatus"></div>
+    <div class="ai-progress" id="aiProgress"><div class="ai-progress-bar" id="aiProgressBar"></div></div>
+    <div class="sheet-actions">
+      <button class="btn ghost" id="aiCancel">キャンセル</button>
+      <button class="btn primary" id="aiRun">解析する</button>
+    </div>
+  </div>
+
+  <div id="aiResult" style="display:none">
+    <div class="ai-result-head"><span id="aiResultCount"></span><span class="hint">追加前に内容を確認・修正できます</span></div>
+    <div class="ai-rows" id="aiRows"></div>
+    <div class="sheet-actions">
+      <button class="btn ghost" id="aiBack">やり直す</button>
+      <button class="btn primary" id="aiCommit">台帳に追加</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const SEED = [];
 const KEY = "zaimu_ledger_dist_v1";
@@ -373,7 +498,7 @@ const COLORS={"食費":"#7be0a3","外食・交際費":"#ff8a6b","趣味・娯楽
 const yen=n=>"¥"+n.toLocaleString("ja-JP");
 
 let DATA=load();
-let state={mode:"month",month:null,year:null,sort:"amt",q:"",catf:"",axis:"cat",chart:"bar"};
+let state={mode:"month",month:null,year:null,q:"",catf:"",axis:"cat",chart:"bar",tab:"summary"};
 let editId=null, formType="支出";
 let selMode=false; let picked=new Set();
 
@@ -472,51 +597,61 @@ function render(){
   const byCat={};
   exp.forEach(r=>{const k=keyFn(r);(byCat[k]=byCat[k]||[]).push(r);});
   let cats=Object.keys(byCat).map(c=>({cat:c,total:byCat[c].reduce((s,r)=>s+r.amt,0),items:byCat[c].slice().sort((a,b)=>a.date<b.date?1:-1),n:byCat[c].length}));
-  cats.sort(state.sort==="amt"?(a,b)=>b.total-a.total:(a,b)=>a.cat.localeCompare(b.cat,"ja"));
+  cats.sort((a,b)=>a.cat.localeCompare(b.cat,"ja"));
   const max=Math.max(1,...cats.map(c=>c.total));
 
-  // 円グラフ or バー
+  // 円グラフ or バー（円グラフは「推移・分析」タブ専用。他タブでは常にバーリスト表示）
   renderDonut(cats,eT);
-  const barOn=state.chart==="bar";
-  document.getElementById("cats").style.display=barOn?"":"none";
-  document.getElementById("donutBox").style.display=barOn?"none":(cats.length?"flex":"none");
-  if(!barOn){document.getElementById("catHint").textContent="凡例タップで明細へ";}
+  const donutMode=(state.tab==="analysis"&&state.chart==="donut");
+  const analysisList=document.getElementById("cats-analysis");
+  if(analysisList)analysisList.style.display=donutMode?"none":"";
+  document.getElementById("donutBox").style.display=donutMode?(cats.length?"flex":"none"):"none";
+  if(donutMode){document.getElementById("catHint").textContent="凡例タップで明細へ";}
   else if(!selMode){document.getElementById("catHint").textContent="タップで明細";}
 
-  const C=document.getElementById("cats");
-  const openSet=new Set([...C.querySelectorAll(".catrow.open")].map(e=>e.dataset.cat));
+  // リストHTMLを生成して3つのカルーセルパネルへ配る（完全追従カルーセル用）
+  const lists=[document.getElementById("cats-summary"),document.getElementById("cats-analysis"),document.getElementById("cats-manage")];
+  const activeList=document.getElementById("cats-"+state.tab);
+  // 開いている費目は現タブのリストから引き継ぐ
+  const openSet=new Set([...(activeList?activeList.querySelectorAll(".catrow.open"):[])].map(e=>e.dataset.cat));
   if(selMode||state.q||state.catf)cats.forEach(c=>openSet.add(c.cat));
-  C.innerHTML="";C.classList.toggle("selmode",selMode);
-  if(!cats.length){C.innerHTML='<div class="glass" style="padding:26px 22px;text-align:center;color:var(--txt-dim);line-height:1.9">まだ取引がありません。<br>右下の <b style="color:#fff">＋</b> ボタンから最初の取引を追加するか、<br>「⬇ .md読み込み」で既存の台帳を取り込めます。</div>';}
-  cats.forEach(c=>{
-    const pct=eT?c.total/eT*100:0, col=colorOf(c.cat);
-    const row=document.createElement("div");row.className="catrow glass";row.dataset.cat=c.cat;
-    row.innerHTML=`<div class="top">
-        <span class="dot" style="background:${col};color:${col}"></span>
-        <span class="cname">${c.cat}</span><span class="cnt">${c.n}</span>
-        <div class="barwrap"><div class="bar" style="width:${c.total/max*100}%;background:${col};color:${col}"></div></div>
-        <span class="camt tnum">${yen(c.total)}</span><span class="cpct tnum">${pct.toFixed(1)}%</span>
-        <span class="chev">▶</span></div>
-      <div class="detail"><div class="detail-inner">
-        ${c.items.map(it=>`<div class="txn ${picked.has(it.id)?'picked':''}" data-id="${it.id}">
-          <span class="tcheck">✓</span>
-          <span class="td tnum">${it.date.slice(5).replace("-","/")}</span>
-          <span class="ts">${esc(it.store)}</span>
-          <span class="tm">${it.means}</span>
-          <span class="ta tnum ${it.amt<0?'neg':''}">${yen(it.amt)}</span>
-          <button class="txnbtn" data-edit="${it.id}">✎</button></div>`).join("")}
-      </div></div>`;
-    const det=row.querySelector(".detail");
-    row.querySelector(".top").addEventListener("click",()=>{const o=row.classList.toggle("open");det.style.maxHeight=o?det.firstElementChild.scrollHeight+"px":"0";});
-    if(openSet.has(c.cat)){row.classList.add("open");requestAnimationFrame(()=>det.style.maxHeight=det.firstElementChild.scrollHeight+"px");}
-    row.querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",e=>{e.stopPropagation();openSheet(b.dataset.edit);}));
-    row.querySelectorAll(".txn").forEach(t=>t.addEventListener("click",e=>{
-      if(!selMode)return; e.stopPropagation();
-      const id=t.dataset.id; if(picked.has(id)){picked.delete(id);t.classList.remove("picked");}else{picked.add(id);t.classList.add("picked");}
-      updateBulk();
-    }));
-    C.appendChild(row);
+
+  let html="";
+  if(!cats.length){
+    html='<div class="glass" style="padding:26px 22px;text-align:center;color:var(--txt-dim);line-height:1.9">まだ取引がありません。<br>右下の <b style="color:#fff">＋</b> ボタンから最初の取引を追加するか、<br>「⬇ .md読み込み」で既存の台帳を取り込めます。</div>';
+  }else{
+    html=cats.map(c=>{
+      const pct=eT?c.total/eT*100:0, col=colorOf(c.cat);
+      const open=openSet.has(c.cat);
+      return `<div class="catrow glass${open?' open':''}" data-cat="${esc(c.cat)}">
+        <div class="top">
+          <span class="dot" style="background:${col};color:${col}"></span>
+          <span class="cname">${esc(c.cat)}</span><span class="cnt">${c.n}</span>
+          <div class="barwrap"><div class="bar" style="width:${c.total/max*100}%;background:${col};color:${col}"></div></div>
+          <span class="camt tnum">${yen(c.total)}</span><span class="cpct tnum">${pct.toFixed(1)}%</span>
+          <span class="chev">▶</span></div>
+        <div class="detail"><div class="detail-inner">
+          ${c.items.map(it=>`<div class="txn ${picked.has(it.id)?'picked':''}" data-id="${it.id}">
+            <span class="tcheck">✓</span>
+            <span class="td tnum">${it.date.slice(5).replace("-","/")}</span>
+            <span class="ts">${esc(it.store)}</span>
+            <span class="tm">${it.means}</span>
+            <span class="ta tnum ${it.amt<0?'neg':''}">${yen(it.amt)}</span>
+            <button class="txnbtn" data-edit="${it.id}">✎</button></div>`).join("")}
+        </div></div></div>`;
+    }).join("");
+  }
+  lists.forEach(L=>{
+    if(!L)return;
+    L.innerHTML=html;L.classList.toggle("selmode",selMode);
+    // 開いている費目の詳細を展開
+    L.querySelectorAll(".catrow.open").forEach(row=>{
+      const det=row.querySelector(".detail");
+      if(det&&det.firstElementChild)requestAnimationFrame(()=>det.style.maxHeight=det.firstElementChild.scrollHeight+"px");
+    });
   });
+  // リスト更新で高さが変わるのでviewportを合わせる
+  requestAnimationFrame(()=>fitViewport(false));
 }
 function esc(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 
@@ -559,7 +694,7 @@ function deltaTag(cur,prev,expIsBad){
 /* 円（ドーナツ）グラフ */
 function renderDonut(cats,total){
   const box=document.getElementById("donutBox");
-  if(state.chart!=="donut"||!cats.length){box.innerHTML="";return;}
+  if(state.tab!=="analysis"||state.chart!=="donut"||!cats.length){box.innerHTML="";return;}
   const size=168,sw=26,r=(size-sw)/2,cx=size/2,cy=size/2,circ=2*Math.PI*r;
   let off=0;const segs=cats.map(c=>{
     const frac=total?c.total/total:0;const len=frac*circ;
@@ -590,7 +725,8 @@ function renderDonut(cats,total){
     document.querySelectorAll("#chartSeg button").forEach(b=>b.classList.toggle("on",b.dataset.chart==="bar"));
     render();
     requestAnimationFrame(()=>{
-      const row=document.querySelector(`.catrow[data-cat="${CSS.escape(cat)}"]`);
+      const list=document.getElementById("cats-analysis");
+      const row=list&&list.querySelector(`.catrow[data-cat="${CSS.escape(cat)}"]`);
       if(row&&!row.classList.contains("open")){row.querySelector(".top").click();row.scrollIntoView({behavior:"smooth",block:"center"});}
     });
   }));
@@ -677,20 +813,81 @@ function applyQF(f){
 }
 
 function renderTrend(){
-  const ms=monthsOf();
+  let ms=monthsOf();
+  // 直近12ヶ月に絞る（多すぎるとラベルが重なるため）
+  const WINDOW=12;
+  const trimmed=ms.length>WINDOW;
+  if(trimmed)ms=ms.slice(-WINDOW);
   const mt=ms.map(m=>({m,total:DATA.filter(r=>r.type==="支出"&&r.date.slice(0,7)===m).reduce((s,r)=>s+r.amt,0)}));
   const max=Math.max(1,...mt.map(x=>x.total));
   const t=document.getElementById("trend");t.innerHTML="";
+  // 列数に応じて表示密度を決める
+  const n=mt.length;
+  t.classList.toggle("dense",n>8);     // 9列以上はラベルを斜めにし金額を隠す
+  t.classList.toggle("hidelabel",n>18);// 万一19列以上残ってもラベル非表示で潰れ防止
+  const showVal=n<=8;                   // 金額（万）は8列以下のときだけ
   mt.forEach(x=>{
     const col=document.createElement("div");col.className="mcol"+(state.mode==="month"&&x.m===state.month?" sel":"");
     col.innerHTML=`<div class="mbarwrap"><div class="mbar" style="height:${x.total/max*100}%"></div></div>
-      <div class="mlbl">${x.m.slice(2).replace("-","/")}</div><div class="mval tnum">${(x.total/10000).toFixed(0)}万</div>`;
+      <div class="mlbl">${x.m.slice(2).replace("-","/")}</div>${showVal?`<div class="mval tnum">${(x.total/10000).toFixed(0)}万</div>`:""}`;
     col.addEventListener("click",()=>{state.mode="month";state.month=x.m;document.getElementById("monthSel").value=x.m;
       document.querySelectorAll("#modeSeg button").forEach(b=>b.classList.toggle("on",b.dataset.mode==="month"));update();});
     t.appendChild(col);
   });
   const avg=mt.length?mt.reduce((s,x)=>s+x.total,0)/mt.length:0;
-  document.getElementById("trendLegend").textContent="月平均支出 "+yen(Math.round(avg));
+  document.getElementById("trendLegend").textContent=(trimmed?"直近12ヶ月 ・ ":"")+"月平均支出 "+yen(Math.round(avg));
+}
+/* タブ切り替え：パネルの表示と、カテゴリ別リスト本体(#cats)のスロット移動 */
+const TAB_ORDER=["summary","analysis","manage"];
+
+/* 指のX座標から、最も近いタブを返す（なぞり操作のハイライト用） */
+function nearestTab(clientX){
+  const btns=[...document.querySelectorAll("#tabbar .tabbtn")];
+  let best=null,bestD=Infinity;
+  btns.forEach(b=>{const r=b.getBoundingClientRect();const c=r.left+r.width/2;const d=Math.abs(clientX-c);
+    if(d<bestD){bestD=d;best=b.dataset.tab;}});
+  return best;
+}
+
+function switchTab(tab,opts){
+  if(!TAB_ORDER.includes(tab))return;
+  opts=opts||{};
+  const changed=state.tab!==tab;
+  state.tab=tab;
+  document.querySelectorAll("#tabbar .tabbtn").forEach(b=>b.classList.toggle("on",b.dataset.tab===tab));
+  setTrack(TAB_ORDER.indexOf(tab),true); // カルーセルを該当パネルへスライド（アニメ付き）
+  if(changed)render();
+  requestAnimationFrame(()=>fitViewport(false));
+  if(opts.scroll!==false)window.scrollTo({top:0,behavior:"smooth"});
+}
+/* 現在タブから offset 分だけ隣のタブへ移動 */
+function moveTab(offset){
+  const i=TAB_ORDER.indexOf(state.tab);
+  const ni=i+offset;
+  if(ni<0||ni>=TAB_ORDER.length)return false;
+  switchTab(TAB_ORDER[ni],{scroll:false});
+  return true;
+}
+/* カルーセルのtrackを index 番目のパネルへ。animate=trueでアニメ、raw=trueでpx指定 */
+function setTrack(indexOrPx,animate,raw){
+  const track=document.getElementById("track");
+  if(!track)return;
+  track.classList.toggle("animating",!!animate);
+  if(raw){track.style.transform="translateX("+indexOrPx+"px)";}
+  else{track.style.transform="translateX(-"+(indexOrPx*(100/3))+"%)";}
+}
+/* viewportの高さをアクティブパネルに合わせる（低いタブで余白が出ないように）。
+   duringDrag=true のときは表示中＋両隣の最大高にして、ドラッグ中に隣が切れないようにする */
+function fitViewport(duringDrag){
+  const vp=document.getElementById("viewport");if(!vp)return;
+  const panels=TAB_ORDER.map(t=>document.getElementById("panel-"+t));
+  if(duringDrag){
+    const h=Math.max(...panels.map(p=>p?p.scrollHeight:0));
+    vp.style.height=h+"px";
+  }else{
+    const p=document.getElementById("panel-"+state.tab);
+    vp.style.height=(p?p.scrollHeight:0)+"px";
+  }
 }
 function update(){rebuildMonths();rebuildYears();buildCatFilter();renderTrend();renderYearSummary();render();renderQF();}
 
@@ -841,9 +1038,270 @@ function doImportReplace(){
 
 let toastT;function toast(msg){const el=document.getElementById("toast");el.textContent=msg;el.classList.add("on");clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove("on"),2200);}
 
+/* ===== AI読み取り（WebLLM：端末内でLLM推論） ===== */
+const AI_MODEL="gemma-2-2b-jpn-it-q4f16_1-MLC"; // 日本語特化・軽量モデル
+let _aiEngine=null, _aiLoading=false, _aiParsed=[];
+
+function aiSupported(){return typeof navigator!=="undefined" && "gpu" in navigator;}
+/* PDFから文字を抽出（PDF.js / 文字埋め込みPDF対応）。スキャン画像PDFは文字が取れない */
+let _pdfLib=null;
+async function loadPdfLib(){
+  if(_pdfLib)return _pdfLib;
+  const lib=await import("https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/build/pdf.min.mjs");
+  lib.GlobalWorkerOptions.workerSrc="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/build/pdf.worker.min.mjs";
+  _pdfLib=lib;return lib;
+}
+async function extractPDF(file){
+  const lib=await loadPdfLib();
+  const data=await file.arrayBuffer();
+  const pdf=await lib.getDocument({data}).promise;
+  let out="";
+  for(let p=1;p<=pdf.numPages;p++){
+    const page=await pdf.getPage(p);
+    const tc=await page.getTextContent();
+    // y座標で行を組み立てる（同じ行のitemをまとめる）
+    let lastY=null,line="";
+    const lines=[];
+    tc.items.forEach(it=>{
+      if(!it.str)return;
+      const y=it.transform?it.transform[5]:null;
+      if(lastY!==null&&y!==null&&Math.abs(y-lastY)>3){lines.push(line.trim());line="";}
+      line+=it.str+" ";lastY=y;
+    });
+    if(line.trim())lines.push(line.trim());
+    out+=lines.join("\n")+"\n";
+  }
+  return out.trim();
+}
+async function onAIFile(file){
+  if(!file)return;
+  const input=document.getElementById("aiInput");
+  if(file.type==="application/pdf"||/\.pdf$/i.test(file.name)){
+    try{
+      aiStatus("PDFから文字を抽出中…");
+      const text=await extractPDF(file);
+      if(!text){aiStatus("このPDFからは文字を取り出せませんでした。スキャン画像のPDFの可能性があります。");return;}
+      input.value=text;
+      aiStatus("PDFを読み込みました。内容を確認して『解析する』を押してください。");
+    }catch(e){
+      aiStatus("PDFの読み込みに失敗しました："+(e&&e.message?e.message:"不明なエラー"));
+    }
+  }else{
+    aiStatus("PDFファイルを選択してください。");
+  }
+}
+function aiStatus(msg){const el=document.getElementById("aiStatus");if(el)el.textContent=msg||"";}
+function aiProgress(p){ // p:0..1 or null
+  const wrap=document.getElementById("aiProgress"),bar=document.getElementById("aiProgressBar");
+  if(!wrap)return;
+  if(p==null){wrap.classList.remove("on");return;}
+  wrap.classList.add("on");bar.style.width=Math.round(p*100)+"%";
+}
+function openAI(){
+  document.getElementById("aiScrim").classList.add("on");
+  document.getElementById("aiSheet").classList.add("on");
+  document.getElementById("aiSetup").style.display="";
+  document.getElementById("aiResult").style.display="none";
+  if(!aiSupported()){
+    aiStatus("お使いの環境はWebGPU非対応のためAI読み取りを利用できません。Chrome／Edge、またはiOS 26以降のSafariでお試しください。");
+    document.getElementById("aiRun").disabled=true;
+  }else{
+    aiStatus(_aiEngine?"モデル準備完了。内容を貼り付けて解析してください。":"初回のみAIモデルのダウンロードが必要です（数百MB〜）。以降はキャッシュされます。");
+    document.getElementById("aiRun").disabled=false;
+  }
+}
+function closeAI(){
+  document.getElementById("aiScrim").classList.remove("on");
+  document.getElementById("aiSheet").classList.remove("on");
+}
+async function ensureEngine(){
+  if(_aiEngine)return _aiEngine;
+  if(_aiLoading)throw new Error("loading");
+  _aiLoading=true;
+  try{
+    aiStatus("AIエンジンを読み込み中…");aiProgress(0);
+    const webllm=await import("https://esm.run/@mlc-ai/web-llm");
+    _aiEngine=await webllm.CreateMLCEngine(AI_MODEL,{
+      initProgressCallback:(r)=>{
+        if(typeof r.progress==="number")aiProgress(r.progress);
+        aiStatus(r.text||"モデルを準備中…");
+      }
+    });
+    aiProgress(1);aiStatus("モデル準備完了。");
+    return _aiEngine;
+  }finally{_aiLoading=false;setTimeout(()=>aiProgress(null),600);}
+}
+function aiBuildPrompt(text){
+  const sys=`あなたは家計簿の入力補助AIです。入力されたクレジットカード明細やレシートのテキストから取引を抽出し、JSON配列だけを出力します。`
+    +`各取引は {"date":"YYYY-MM-DD","type":"支出"または"収入","store":"店舗名や内容","cat":"費目","amt":数値,"means":"カード"または"現金"または"振込"} の形式です。`
+    +`費目は支出なら次から選ぶ: ${CATS_EXP.join("、")}。収入なら次から選ぶ: ${CATS_INC.join("、")}。`
+    +`金額は数値のみ（カンマや円記号を除く）。日付が西暦でなければ${new Date().getFullYear()}年として補完。`
+    +`説明文や前置きは一切書かず、JSON配列のみを出力すること。`;
+  return [
+    {role:"system",content:sys},
+    {role:"user",content:"次の内容から取引を抽出してJSON配列で出力してください:\n\n"+text}
+  ];
+}
+function aiExtractJSON(s){
+  // ```json ... ``` や前後の説明を除去してJSON配列を取り出す
+  if(!s)return [];
+  let t=s.replace(/```json/gi,"```").replace(/```/g,"").trim();
+  const a=t.indexOf("["),b=t.lastIndexOf("]");
+  if(a>=0&&b>a)t=t.slice(a,b+1);
+  try{const arr=JSON.parse(t);return Array.isArray(arr)?arr:[];}catch(e){return [];}
+}
+function aiNormalize(arr){
+  const out=[];
+  arr.forEach(r=>{
+    if(!r||typeof r!=="object")return;
+    let date=String(r.date||"").trim();
+    const m=date.match(/(\d{4})\D(\d{1,2})\D(\d{1,2})/);
+    if(m)date=`${m[1]}-${String(m[2]).padStart(2,"0")}-${String(m[3]).padStart(2,"0")}`;
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date))return;
+    let type=(r.type==="収入")?"収入":"支出";
+    let amt=parseInt(String(r.amt).replace(/[^\d-]/g,""),10);
+    if(isNaN(amt))return;
+    const list=type==="支出"?CATS_EXP:CATS_INC;
+    let cat=list.includes(r.cat)?r.cat:(type==="支出"?"その他":"その他");
+    let means=["カード","現金","振込"].includes(r.means)?r.means:"カード";
+    out.push({date,type,store:String(r.store||"").trim()||"（内容不明）",cat,amt,means});
+  });
+  return out;
+}
+async function runAI(){
+  const text=document.getElementById("aiInput").value.trim();
+  if(!text){toast("内容を貼り付けてください");return;}
+  if(!aiSupported()){toast("この環境ではAI読み取りを利用できません");return;}
+  const runBtn=document.getElementById("aiRun");runBtn.disabled=true;
+  try{
+    const engine=await ensureEngine();
+    aiStatus("取引を解析中…（端末内で処理しています）");
+    const reply=await engine.chat.completions.create({messages:aiBuildPrompt(text),temperature:0});
+    const raw=reply.choices?.[0]?.message?.content||"";
+    const parsed=aiNormalize(aiExtractJSON(raw));
+    if(!parsed.length){aiStatus("取引を抽出できませんでした。表記を整えて再度お試しください。");runBtn.disabled=false;return;}
+    _aiParsed=parsed;renderAIResult();
+  }catch(e){
+    if(String(e&&e.message)==="loading")return;
+    aiStatus("解析に失敗しました："+(e&&e.message?e.message:"不明なエラー"));
+    runBtn.disabled=false;
+  }
+}
+function renderAIResult(){
+  document.getElementById("aiSetup").style.display="none";
+  document.getElementById("aiResult").style.display="";
+  document.getElementById("aiResultCount").textContent=_aiParsed.length+"件の取引を抽出";
+  const C=document.getElementById("aiRows");
+  C.innerHTML=_aiParsed.map((r,i)=>{
+    const catList=(r.type==="支出"?CATS_EXP:CATS_INC);
+    return `<div class="ai-row" data-i="${i}">
+      <div class="ai-row-top">
+        <input class="air-date" type="date" value="${r.date}">
+        <select class="air-type"><option${r.type==="支出"?" selected":""}>支出</option><option${r.type==="収入"?" selected":""}>収入</option></select>
+        <input class="air-store" type="text" value="${esc(r.store)}">
+        <button class="air-del" title="削除">✕</button>
+      </div>
+      <div class="ai-row-mid">
+        <select class="air-cat">${catList.map(c=>`<option${c===r.cat?" selected":""}>${c}</option>`).join("")}</select>
+        <input class="air-amt" type="number" value="${r.amt}">
+        <select class="air-means">${["カード","現金","振込"].map(m=>`<option${m===r.means?" selected":""}>${m}</option>`).join("")}</select>
+      </div>
+    </div>`;
+  }).join("");
+  // 種別変更で費目リストを切替
+  C.querySelectorAll(".ai-row").forEach(row=>{
+    const typeSel=row.querySelector(".air-type"),catSel=row.querySelector(".air-cat");
+    typeSel.addEventListener("change",()=>{
+      const list=typeSel.value==="支出"?CATS_EXP:CATS_INC;
+      catSel.innerHTML=list.map(c=>`<option>${c}</option>`).join("");
+    });
+    row.querySelector(".air-del").addEventListener("click",()=>{row.remove();});
+  });
+}
+function commitAI(){
+  const rows=[...document.getElementById("aiRows").querySelectorAll(".ai-row")];
+  if(!rows.length){toast("追加する取引がありません");return;}
+  const recs=[];
+  rows.forEach(row=>{
+    const date=row.querySelector(".air-date").value;
+    const type=row.querySelector(".air-type").value;
+    const store=row.querySelector(".air-store").value.trim();
+    const cat=row.querySelector(".air-cat").value;
+    const amt=parseInt(row.querySelector(".air-amt").value,10);
+    const means=row.querySelector(".air-means").value;
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||isNaN(amt)||!store)return;
+    recs.push({date,type,store,cat,amt,means});
+  });
+  if(!recs.length){toast("有効な取引がありません");return;}
+  // 既存と重複しないものだけ追加（内容の署名で判定）
+  const sigOf=r=>`${r.date}|${r.type}|${r.store}|${r.cat}|${r.amt}|${r.means}`;
+  const existingSig=new Set(DATA.map(sigOf));
+  let added=0;
+  recs.forEach(r=>{
+    const s=sigOf(r);
+    if(existingSig.has(s))return;          // 既存と同一内容はスキップ
+    existingSig.add(s);
+    DATA.push({...r,id:stableId(r,DATA)});  // 安定IDを採番して追加
+    added++;
+  });
+  save();state.month=null;update();closeAI();
+  toast(added>0?added+"件を台帳に追加しました":"すべて重複のため追加しませんでした");
+}
+
 /* events */
-document.querySelectorAll("#modeSeg button").forEach(b=>b.addEventListener("click",()=>{state.mode=b.dataset.mode;document.querySelectorAll("#modeSeg button").forEach(x=>x.classList.toggle("on",x===b));update();}));
-document.querySelectorAll("#sortSeg button").forEach(b=>b.addEventListener("click",()=>{state.sort=b.dataset.sort;document.querySelectorAll("#sortSeg button").forEach(x=>x.classList.toggle("on",x===b));render();}));
+const MODE_ORDER=["month","year","all"];
+function setMode(mode){
+  if(!MODE_ORDER.includes(mode)||mode===state.mode)return;
+  state.mode=mode;
+  document.querySelectorAll("#modeSeg button").forEach(x=>x.classList.toggle("on",x.dataset.mode===mode));
+  update();
+}
+document.querySelectorAll("#modeSeg button").forEach(b=>b.addEventListener("click",()=>{
+  if(suppressModeClick){suppressModeClick=false;return;}
+  setMode(b.dataset.mode);
+}));
+
+/* 月別/年別/全期間セグmeを指でなぞって切替（下部タブと同じロジック：
+   なぞり中はハイライトのみ動かし、離したとき1回だけ確定） */
+let suppressModeClick=false;
+(function setupModeDrag(){
+  const seg=document.getElementById("modeSeg");
+  const btns=[...seg.querySelectorAll("button")];
+  let dragging=false,pendingMode=null;
+  function nearest(clientX){
+    let best=null,bestD=Infinity;
+    btns.forEach(b=>{const r=b.getBoundingClientRect();const c=r.left+r.width/2;const d=Math.abs(clientX-c);
+      if(d<bestD){bestD=d;best=b.dataset.mode;}});
+    return best;
+  }
+  function track(x){
+    const mode=nearest(x);
+    if(mode&&mode!==pendingMode){
+      pendingMode=mode;
+      btns.forEach(b=>b.classList.toggle("on",b.dataset.mode===mode));
+    }
+  }
+  function commit(){
+    dragging=false;seg.classList.remove("dragging");
+    if(pendingMode&&pendingMode!==state.mode){suppressModeClick=true;setMode(pendingMode);}
+    else{btns.forEach(b=>b.classList.toggle("on",b.dataset.mode===state.mode));}
+    pendingMode=null;
+  }
+  function cancel(){dragging=false;seg.classList.remove("dragging");pendingMode=null;
+    btns.forEach(b=>b.classList.toggle("on",b.dataset.mode===state.mode));}
+  seg.addEventListener("touchstart",e=>{
+    if(e.touches.length!==1)return;
+    dragging=true;pendingMode=null;seg.classList.add("dragging");track(e.touches[0].clientX);
+  },{passive:true});
+  seg.addEventListener("touchmove",e=>{
+    if(!dragging)return;e.preventDefault();track(e.touches[0].clientX);
+  },{passive:false});
+  seg.addEventListener("touchend",commit,{passive:true});
+  seg.addEventListener("touchcancel",cancel,{passive:true});
+  seg.addEventListener("mousedown",e=>{dragging=true;pendingMode=null;seg.classList.add("dragging");track(e.clientX);});
+  window.addEventListener("mousemove",e=>{if(dragging)track(e.clientX);});
+  window.addEventListener("mouseup",()=>{if(dragging)commit();});
+})();
 document.querySelectorAll("#axisSeg button").forEach(b=>b.addEventListener("click",()=>{state.axis=b.dataset.axis;document.querySelectorAll("#axisSeg button").forEach(x=>x.classList.toggle("on",x===b));render();}));
 document.querySelectorAll("#chartSeg button").forEach(b=>b.addEventListener("click",()=>{state.chart=b.dataset.chart;document.querySelectorAll("#chartSeg button").forEach(x=>x.classList.toggle("on",x===b));render();}));
 document.getElementById("monthSel").addEventListener("change",e=>{state.month=e.target.value;update();});
@@ -862,12 +1320,147 @@ document.getElementById("exportBtn").addEventListener("click",exportMD);
 document.getElementById("importBtn").addEventListener("click",()=>document.getElementById("fileInput").click());
 document.getElementById("fileInput").addEventListener("change",e=>{if(e.target.files[0])importMD(e.target.files[0]);e.target.value="";});
 document.getElementById("selBtn").addEventListener("click",()=>setSelMode(!selMode));
+document.getElementById("aiBtn").addEventListener("click",openAI);
+document.getElementById("aiPickFile").addEventListener("click",()=>document.getElementById("aiFileInput").click());
+document.getElementById("aiFileInput").addEventListener("change",e=>{if(e.target.files[0])onAIFile(e.target.files[0]);e.target.value="";});
+document.getElementById("aiCancel").addEventListener("click",closeAI);
+document.getElementById("aiScrim").addEventListener("click",closeAI);
+document.getElementById("aiRun").addEventListener("click",runAI);
+document.getElementById("aiBack").addEventListener("click",()=>{document.getElementById("aiSetup").style.display="";document.getElementById("aiResult").style.display="none";document.getElementById("aiRun").disabled=false;});
+document.getElementById("aiCommit").addEventListener("click",commitAI);
 document.getElementById("bulkClose").addEventListener("click",()=>setSelMode(false));
 document.getElementById("bulkApply").addEventListener("click",applyBulk);
 document.getElementById("impAppend").addEventListener("click",doImportAppend);
 document.getElementById("impReplace").addEventListener("click",doImportReplace);
 document.getElementById("impCancel").addEventListener("click",closeImport);
 document.getElementById("impScrim").addEventListener("click",closeImport);
+document.querySelectorAll("#tabbar .tabbtn").forEach(b=>b.addEventListener("click",e=>{
+  if(suppressTabClick){suppressTabClick=false;return;} // なぞり操作直後のclickは無視
+  switchTab(b.dataset.tab);
+}));
+
+/* カテゴリ別リストのクリック処理（3パネル分をtrackで一括委譲） */
+document.getElementById("track").addEventListener("click",e=>{
+  const editBtn=e.target.closest(".txnbtn[data-edit]");
+  if(editBtn){e.stopPropagation();openSheet(editBtn.dataset.edit);return;}
+  const txn=e.target.closest(".txn");
+  if(txn&&selMode){
+    e.stopPropagation();
+    const id=txn.dataset.id;
+    if(picked.has(id)){picked.delete(id);txn.classList.remove("picked");}
+    else{picked.add(id);txn.classList.add("picked");}
+    updateBulk();return;
+  }
+  const top=e.target.closest(".catrow .top");
+  if(top){
+    const row=top.closest(".catrow");const det=row.querySelector(".detail");
+    const o=row.classList.toggle("open");
+    det.style.maxHeight=o?det.firstElementChild.scrollHeight+"px":"0";
+    setTimeout(()=>fitViewport(false),260); // 開閉アニメ後に高さ反映
+  }
+});
+
+/* 下部タブバーを指でなぞって切替（上の月別/年別/全期間と同じロジック：
+   なぞり中はハイライトのみ動かし、離したとき1回だけ確定） */
+let suppressTabClick=false;
+(function setupTabbarDrag(){
+  const bar=document.getElementById("tabbar");
+  const btns=[...bar.querySelectorAll(".tabbtn")];
+  let dragging=false,pendingTab=null;
+  function track(x){
+    const tab=nearestTab(x);
+    if(tab&&tab!==pendingTab){
+      pendingTab=tab;
+      btns.forEach(b=>b.classList.toggle("on",b.dataset.tab===tab));
+    }
+  }
+  function commit(){
+    dragging=false;bar.classList.remove("dragging");
+    if(pendingTab&&pendingTab!==state.tab){suppressTabClick=true;switchTab(pendingTab,{scroll:false});}
+    else{btns.forEach(b=>b.classList.toggle("on",b.dataset.tab===state.tab));}
+    pendingTab=null;
+  }
+  function cancel(){dragging=false;bar.classList.remove("dragging");pendingTab=null;
+    btns.forEach(b=>b.classList.toggle("on",b.dataset.tab===state.tab));}
+  bar.addEventListener("touchstart",e=>{
+    if(e.touches.length!==1)return;
+    dragging=true;pendingTab=null;bar.classList.add("dragging");track(e.touches[0].clientX);
+  },{passive:true});
+  bar.addEventListener("touchmove",e=>{
+    if(!dragging)return;e.preventDefault();track(e.touches[0].clientX);
+  },{passive:false});
+  bar.addEventListener("touchend",commit,{passive:true});
+  bar.addEventListener("touchcancel",cancel,{passive:true});
+  bar.addEventListener("mousedown",e=>{dragging=true;pendingTab=null;bar.classList.add("dragging");track(e.clientX);});
+  window.addEventListener("mousemove",e=>{if(dragging)track(e.clientX);});
+  window.addEventListener("mouseup",()=>{if(dragging)commit();});
+})();
+
+/* 横スワイプでタブ移動 */
+(function setupSwipe(){
+  const area=document.getElementById("viewport");
+  const edgeL=document.getElementById("edgeL"),edgeR=document.getElementById("edgeR");
+  let x0=null,y0=null,t0=0,axis=null,W=320,baseX=0;
+  const THRESH_RATIO=0.20;
+  const MIN_THRESH=50;
+  const LOCK=8;
+  const isInteractive=el=>el.closest&&el.closest("input,select,textarea,button,.trend,.donut-wrap,.ymonths,.sheet,.bulkbar,.impdlg,.tabbar");
+  const idx=()=>TAB_ORDER.indexOf(state.tab);
+
+  function reset(){
+    area.classList.remove("dragging");
+    setTrack(idx(),true);
+    requestAnimationFrame(()=>fitViewport(false));
+    x0=null;axis=null;edgeL.classList.remove("on");edgeR.classList.remove("on");
+  }
+
+  area.addEventListener("touchstart",e=>{
+    if(e.touches.length!==1||selMode||isInteractive(e.target)){x0=null;axis=null;return;}
+    const t=e.touches[0];x0=t.clientX;y0=t.clientY;t0=Date.now();axis=null;
+    W=window.innerWidth||320;
+    baseX=-idx()*W; // 現在のtrack位置（px換算）
+  },{passive:true});
+
+  area.addEventListener("touchmove",e=>{
+    if(x0===null)return;
+    const t=e.touches[0];const dx=t.clientX-x0,dy=t.clientY-y0;
+    if(axis===null){
+      if(Math.abs(dx)<LOCK&&Math.abs(dy)<LOCK)return;
+      axis=Math.abs(dx)>Math.abs(dy)?"x":"y";
+      if(axis==="x"){area.classList.add("dragging");fitViewport(true);} // 横確定→隣も見えるよう最大高に
+    }
+    if(axis!=="x")return;
+    e.preventDefault(); // 横追従中は縦スクロール抑止
+    let move=dx;
+    const i=idx();
+    if((i===0&&dx>0)||(i===TAB_ORDER.length-1&&dx<0))move=dx*0.32;
+    setTrack(baseX+move,false,true); // px指定でtrackを指追従
+    edgeR.classList.toggle("on",dx<0&&i<TAB_ORDER.length-1);
+    edgeL.classList.toggle("on",dx>0&&i>0);
+  },{passive:false});
+
+  area.addEventListener("touchend",e=>{
+    area.classList.remove("dragging");
+    if(x0===null){reset();return;}
+    const t=e.changedTouches[0];const dx=t.clientX-x0,dt=Date.now()-t0;
+    edgeL.classList.remove("on");edgeR.classList.remove("on");
+    if(axis!=="x"){x0=null;axis=null;fitViewport(false);return;}
+    const thresh=Math.max(MIN_THRESH,W*THRESH_RATIO);
+    const fast=dt<260&&Math.abs(dx)>40;
+    const dir=dx<0?1:-1;
+    const i=idx();
+    const target=i+dir;
+    if((Math.abs(dx)>thresh||fast)&&target>=0&&target<TAB_ORDER.length){
+      switchTab(TAB_ORDER[target],{scroll:false}); // 該当タブへスナップ＋枠移動
+    }else{
+      setTrack(i,true); // 元位置へ戻す
+      requestAnimationFrame(()=>fitViewport(false));
+    }
+    x0=null;axis=null;
+  },{passive:true});
+
+  area.addEventListener("touchcancel",reset,{passive:true});
+})();
 
 /* PWA: manifest（インライン生成）＋ Service Worker（オフラインキャッシュ） */
 (function setupPWA(){
@@ -890,11 +1483,15 @@ document.getElementById("impScrim").addEventListener("click",closeImport);
       const swCode=`
         const CACHE="cashfile-v1";
         const PAGE=${JSON.stringify(location.pathname)};
+        const ORIGIN=${JSON.stringify(location.origin)};
         self.addEventListener("install",e=>{self.skipWaiting();});
         self.addEventListener("activate",e=>{e.waitUntil(self.clients.claim());});
         self.addEventListener("fetch",e=>{
           const req=e.request;
           if(req.method!=="GET"){return;}
+          // 別オリジン（AIモデル配信のhuggingface/esm.run/github等）は素通し。
+          // 大容量ファイルをキャッシュしようとして失敗するのを防ぐ。
+          if(new URL(req.url).origin!==ORIGIN){return;}
           e.respondWith(
             fetch(req).then(res=>{
               const copy=res.clone();
@@ -910,7 +1507,13 @@ document.getElementById("impScrim").addEventListener("click",closeImport);
   }catch(e){/* PWA非対応環境では何もしない */}
 })();
 
+switchTab("summary");
+setTrack(0,false); // 初回はアニメ無しで配置
 update();
+// 枠・トラック・高さの初期化＋リサイズ/回転に追従
+requestAnimationFrame(()=>{setTrack(TAB_ORDER.indexOf(state.tab),false);fitViewport(false);});
+window.addEventListener("resize",()=>{setTrack(TAB_ORDER.indexOf(state.tab),false);fitViewport(false);});
+window.addEventListener("orientationchange",()=>setTimeout(()=>{setTrack(TAB_ORDER.indexOf(state.tab),false);fitViewport(false);},200));
 </script>
 </body>
 </html>
