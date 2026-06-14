@@ -12,12 +12,20 @@
 <title>CashFile</title>
 <style>
 :root{
-  --txt:#f4f6fb;--txt-dim:rgba(244,246,251,.62);--txt-faint:rgba(244,246,251,.40);
+  --txt:#f4f6fb;--txt-dim:rgba(244,246,251,.70);--txt-faint:rgba(244,246,251,.52);
   --glass:rgba(255,255,255,.07);--glass-hi:rgba(255,255,255,.13);
   --stroke:rgba(255,255,255,.14);--stroke-hi:rgba(255,255,255,.30);
   --exp:#ff8a6b;--inc:#6fe3b0;--r:22px;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+/* キーボード操作時のフォーカス可視化（WCAG 2.4.7） */
+:focus-visible{outline:2px solid #9fb0ff;outline-offset:2px;border-radius:6px}
+input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid #9fb0ff;outline-offset:1px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+/* モーションを抑える設定への配慮（WCAG 2.3.3） */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
+}
 html,body{height:100%}
 body{font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN",-apple-system,BlinkMacSystemFont,"SF Pro JP","Yu Gothic",Meiryo,sans-serif;
   color:var(--txt);background:#0a0e1a;-webkit-font-smoothing:antialiased;line-height:1.5;overflow-x:hidden}
@@ -44,7 +52,7 @@ h1{font-size:clamp(24px,6vw,36px);font-weight:700;letter-spacing:-.02em;margin-t
 .range{margin-top:7px;color:var(--txt-dim);font-size:13px}
 
 .tools{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
-.tool{font-family:inherit;font-size:12.5px;font-weight:600;padding:9px 14px;border-radius:13px;border:1px solid var(--stroke);background:var(--glass);color:var(--txt-dim);cursor:pointer;transition:.2s}
+.tool{font-family:inherit;font-size:12.5px;font-weight:600;padding:12px 15px;border-radius:13px;border:1px solid var(--stroke);background:var(--glass);color:var(--txt-dim);cursor:pointer;transition:.2s;min-height:44px}
 .tool:active{transform:scale(.96);color:#fff}
 
 .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
@@ -63,11 +71,12 @@ select option{background:#141a30;color:#fff}
 /* search bar */
 .searchbar{display:flex;gap:10px;align-items:center;margin-bottom:22px}
 .searchwrap{flex:1;position:relative}
-.searchwrap input{width:100%;font-family:inherit;font-size:14px;color:#fff;padding:11px 38px 11px 40px;border:1px solid var(--stroke);border-radius:15px;background:rgba(255,255,255,.05);outline:none}
+.searchwrap input{width:100%;font-family:inherit;font-size:14px;color:#fff;padding:11px 44px 11px 40px;border:1px solid var(--stroke);border-radius:15px;background:rgba(255,255,255,.05);outline:none}
 .searchwrap input:focus{border-color:var(--stroke-hi);background:rgba(255,255,255,.09)}
 .searchwrap .si{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--txt-faint);font-size:15px;pointer-events:none}
-.searchwrap .sx{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--txt-faint);font-size:16px;background:none;border:none;cursor:pointer;display:none}
-.searchwrap .sx.on{display:block}
+.searchwrap .sx{position:absolute;right:4px;top:50%;transform:translateY(-50%);color:var(--txt-dim);font-size:15px;background:none;border:none;cursor:pointer;display:none;width:36px;height:36px;border-radius:50%;align-items:center;justify-content:center}
+.searchwrap .sx:active{background:var(--glass-hi)}
+.searchwrap .sx.on{display:flex}
 .catfilter{border-radius:15px;overflow:hidden;flex:0 0 auto}
 .catfilter select{padding:11px 34px 11px 14px;font-size:13px}
 
@@ -83,7 +92,7 @@ select option{background:#141a30;color:#fff}
 .sec{margin:28px 0 13px;display:flex;align-items:baseline;gap:11px;padding:0 6px}
 .sec h2{font-size:15px;font-weight:700}.sec .hint{font-size:12px;color:var(--txt-faint)}
 
-.trendbox{padding:18px 14px 13px}
+.trendbox{padding:18px 14px 13px;margin-bottom:22px}
 .trend{display:flex;align-items:flex-end;gap:5px;height:178px}
 .mcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;min-width:0}
 .mbarwrap{width:100%;display:flex;align-items:flex-end;justify-content:center;height:142px}
@@ -128,7 +137,7 @@ select option{background:#141a30;color:#fff}
 .ts{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tm{font-size:10px;color:var(--txt-dim);border:1px solid var(--stroke);padding:1px 7px;border-radius:20px}
 .ta{font-weight:700;text-align:right;min-width:74px}.ta.neg{color:var(--inc)}
-.txnbtn{background:none;border:none;color:var(--txt-faint);font-size:15px;cursor:pointer;padding:2px 4px;border-radius:8px}
+.txnbtn{background:none;border:none;color:var(--txt-dim);font-size:15px;cursor:pointer;width:36px;height:36px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
 .selmode .txnbtn{display:none}
 .txnbtn:active{background:var(--glass-hi)}
 
@@ -160,11 +169,6 @@ footer{margin-top:42px;padding:16px 6px 0;border-top:1px solid var(--stroke);fon
   align-self:flex-start}
 /* スワイプ追従 */
 .tabpanel.dragging{animation:none;transition:none;will-change:transform}
-.tabpanel.snapping{animation:none;transition:transform .26s cubic-bezier(.25,.8,.3,1),opacity .26s ease}
-@keyframes slideInL{from{transform:translateX(34px);opacity:0}to{transform:none;opacity:1}}
-@keyframes slideInR{from{transform:translateX(-34px);opacity:0}to{transform:none;opacity:1}}
-.tabpanel.in-left{animation:slideInL .26s cubic-bezier(.25,.8,.3,1)}
-.tabpanel.in-right{animation:slideInR .26s cubic-bezier(.25,.8,.3,1)}
 /* スワイプ可能なことを示す“引っかかり”ヒント（端で軽く光る） */
 .edge-hint{position:fixed;top:0;bottom:0;width:40px;z-index:39;pointer-events:none;opacity:0;transition:opacity .2s}
 .edge-hint.left{left:0;background:linear-gradient(90deg,rgba(123,140,255,.25),transparent)}
@@ -223,30 +227,6 @@ footer{margin-top:42px;padding:16px 6px 0;border-top:1px solid var(--stroke);fon
 .toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translate(-50%,20px);z-index:60;
   padding:11px 20px;border-radius:14px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:.3s;white-space:nowrap;max-width:90vw;text-align:center}
 .toast.on{opacity:1;transform:translate(-50%,0)}
-
-/* AI読み取り */
-.ai-note{font-size:12.5px;color:var(--txt-dim);line-height:1.7;margin-bottom:16px;padding:0 2px}
-#aiInput{width:100%;font-family:inherit;font-size:14px;color:#fff;padding:12px 14px;border:1px solid var(--stroke);border-radius:14px;background:rgba(255,255,255,.05);outline:none;resize:vertical;line-height:1.6}
-#aiInput:focus{border-color:var(--stroke-hi);background:rgba(255,255,255,.09)}
-.ai-status{font-size:12.5px;color:var(--txt-dim);margin:10px 2px 0;min-height:18px;line-height:1.5}
-.ai-progress{height:6px;border-radius:20px;background:rgba(255,255,255,.08);overflow:hidden;margin:8px 2px 0;opacity:0;transition:opacity .2s}
-.ai-progress.on{opacity:1}
-.ai-progress-bar{height:100%;width:0;border-radius:20px;background:linear-gradient(90deg,#7b8cff,#d65ad6);transition:width .3s}
-.ai-result-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:12px;padding:0 2px;flex-wrap:wrap}
-#aiResultCount{font-weight:700;font-size:14px}
-.ai-rows{display:flex;flex-direction:column;gap:8px;max-height:46vh;overflow-y:auto;margin-bottom:6px}
-.ai-row{display:flex;flex-direction:column;gap:7px;padding:9px;border:1px solid var(--stroke);border-radius:13px;background:rgba(255,255,255,.04)}
-.ai-row input,.ai-row select{font-family:inherit;font-size:12.5px;color:#fff;padding:7px 8px;border:1px solid var(--stroke);border-radius:9px;background:rgba(255,255,255,.05);outline:none;min-width:0;appearance:none}
-.ai-row select option{background:#141a30}
-.ai-row-top{display:flex;gap:7px;align-items:center}
-.ai-row-top .air-date{flex:0 0 104px}
-.ai-row-top .air-type{flex:0 0 72px}
-.ai-row-top .air-store{flex:1}
-.ai-row-top .air-del{flex:0 0 auto;background:none;border:none;color:var(--txt-faint);font-size:16px;cursor:pointer;padding:2px 6px}
-.ai-row-mid{display:flex;gap:7px}
-.ai-row-mid .air-cat{flex:1}
-.ai-row-mid .air-amt{flex:0 0 92px;text-align:right}
-.ai-row-mid .air-means{flex:0 0 78px}
 
 /* delta (前月比) */
 .delta{font-size:11px;font-weight:700;margin-left:7px;padding:1px 7px;border-radius:20px;vertical-align:middle;white-space:nowrap}
@@ -355,9 +335,9 @@ footer{margin-top:42px;padding:16px 6px 0;border-top:1px solid var(--stroke);fon
 
   <div class="searchbar">
     <div class="searchwrap glass" style="border-radius:15px">
-      <span class="si">⌕</span>
+      <span class="si" aria-hidden="true">⌕</span>
       <input type="text" id="search" placeholder="店舗・内容で検索" autocomplete="off">
-      <button class="sx" id="searchClear">✕</button>
+      <button class="sx" id="searchClear" aria-label="検索をクリア">✕</button>
     </div>
     <div class="catfilter selwrap glass"><select id="catFilter"><option value="">全費目</option></select></div>
   </div>
@@ -384,7 +364,6 @@ footer{margin-top:42px;padding:16px 6px 0;border-top:1px solid var(--stroke);fon
 <!-- タブ3：明細・操作 -->
 <section class="tabpanel" id="panel-manage">
   <div class="tools">
-    <button class="tool" id="aiBtn">🤖 AIで読み取り</button>
     <button class="tool" id="exportBtn">⬆ .md書き出し</button>
     <button class="tool" id="importBtn">⬇ .md読み込み</button>
     <button class="tool" id="selBtn">☑ 費目を一括編集</button>
@@ -406,10 +385,10 @@ footer{margin-top:42px;padding:16px 6px 0;border-top:1px solid var(--stroke);fon
 <div class="edge-hint left" id="edgeL"></div>
 <div class="edge-hint right" id="edgeR"></div>
 
-<nav class="tabbar glass" id="tabbar">
-  <button class="tabbtn on" data-tab="summary"><span class="ti">▣</span><span class="tl">サマリー</span></button>
-  <button class="tabbtn" data-tab="analysis"><span class="ti">📈</span><span class="tl">推移・分析</span></button>
-  <button class="tabbtn" data-tab="manage"><span class="ti">≡</span><span class="tl">明細・操作</span></button>
+<nav class="tabbar glass" id="tabbar" aria-label="メイン画面切り替え">
+  <button class="tabbtn on" data-tab="summary"><span class="ti" aria-hidden="true">▣</span><span class="tl">サマリー</span></button>
+  <button class="tabbtn" data-tab="analysis"><span class="ti" aria-hidden="true">📈</span><span class="tl">推移・分析</span></button>
+  <button class="tabbtn" data-tab="manage"><span class="ti" aria-hidden="true">≡</span><span class="tl">明細・操作</span></button>
 </nav>
 
 <button class="fab" id="fab" aria-label="取引を追加">+</button>
@@ -422,7 +401,7 @@ footer{margin-top:42px;padding:16px 6px 0;border-top:1px solid var(--stroke);fon
 </div>
 
 <div class="scrim" id="scrim"></div>
-<div class="sheet glass" id="sheet">
+<div class="sheet glass" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
   <div class="grip"></div>
   <h3 id="sheetTitle">取引を追加</h3>
   <div class="typeseg" id="typeSeg">
@@ -446,7 +425,7 @@ footer{margin-top:42px;padding:16px 6px 0;border-top:1px solid var(--stroke);fon
 </div>
 
 <div class="scrim" id="impScrim"></div>
-<div class="impdlg glass" id="impDlg">
+<div class="impdlg glass" id="impDlg" role="dialog" aria-modal="true" aria-labelledby="impTitle">
   <h3 id="impTitle">.mdの読み込み</h3>
   <p id="impMsg"></p>
   <div class="imp-actions">
@@ -457,37 +436,6 @@ footer{margin-top:42px;padding:16px 6px 0;border-top:1px solid var(--stroke);fon
 </div>
 
 <div class="toast glass" id="toast"></div>
-
-<!-- AI読み取りシート -->
-<div class="scrim" id="aiScrim"></div>
-<div class="sheet glass" id="aiSheet">
-  <div class="grip"></div>
-  <h3>🤖 AIで明細・レシートを読み取り</h3>
-  <p class="ai-note">クレカ明細やレシートの内容を貼り付けると、AIが端末内で取引を抽出・分類します。すべてこの端末の中だけで処理され、外部に送信されません。</p>
-
-  <div id="aiSetup">
-    <button class="btn ghost" id="aiPickFile" style="width:100%;margin-bottom:12px">📄 PDFファイルを選択</button>
-    <input type="file" id="aiFileInput" accept=".pdf,application/pdf,image/*" style="display:none">
-    <div class="field"><label>読み取り内容（貼り付け・編集も可）</label>
-      <textarea id="aiInput" rows="7" placeholder="例：&#10;2025/05/10 セブンイレブン 540円&#10;2025/05/11 JR東日本 660円&#10;2025/05/12 Amazon 3,200円&#10;&#10;またはPDF・画像（PNG/JPG）を選択すると内容がここに読み込まれます"></textarea>
-    </div>
-    <div class="ai-status" id="aiStatus"></div>
-    <div class="ai-progress" id="aiProgress"><div class="ai-progress-bar" id="aiProgressBar"></div></div>
-    <div class="sheet-actions">
-      <button class="btn ghost" id="aiCancel">キャンセル</button>
-      <button class="btn primary" id="aiRun">解析する</button>
-    </div>
-  </div>
-
-  <div id="aiResult" style="display:none">
-    <div class="ai-result-head"><span id="aiResultCount"></span><span class="hint">追加前に内容を確認・修正できます</span></div>
-    <div class="ai-rows" id="aiRows"></div>
-    <div class="sheet-actions">
-      <button class="btn ghost" id="aiBack">やり直す</button>
-      <button class="btn primary" id="aiCommit">台帳に追加</button>
-    </div>
-  </div>
-</div>
 
 <script>
 const SEED = [];
@@ -509,7 +457,6 @@ let QF=loadQF();
 
 function load(){try{const s=localStorage.getItem(KEY);if(s){const a=JSON.parse(s);if(Array.isArray(a))return a;}}catch(e){}return SEED.map((r,i)=>({...r,id:"s"+i}));}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(DATA));}catch(e){toast("保存に失敗しました");}}
-function uid(){return "x"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 /* 安定ID：取引内容から再現性のあるハッシュを生成。
    同一署名（日付・種別・店舗・費目・金額・手段が完全一致）の取引が複数あっても、
    出現順の連番を加えて衝突しないようにする。これにより .md 書き出し→読み込みで
@@ -806,8 +753,8 @@ function renderQF(){
 }
 function applyQF(f){
   state.q=f.q;state.catf=f.catf;
-  const se=document.getElementById("search");se.value=f.q;
-  document.getElementById("searchClear").classList.toggle("on",!!f.q);
+  searchEl.value=f.q;
+  searchClearEl.classList.toggle("on",!!f.q);
   document.getElementById("catFilter").value=f.catf;
   render();renderQF();
 }
@@ -854,19 +801,15 @@ function switchTab(tab,opts){
   opts=opts||{};
   const changed=state.tab!==tab;
   state.tab=tab;
-  document.querySelectorAll("#tabbar .tabbtn").forEach(b=>b.classList.toggle("on",b.dataset.tab===tab));
+  document.querySelectorAll("#tabbar .tabbtn").forEach(b=>{
+    const on=b.dataset.tab===tab;
+    b.classList.toggle("on",on);
+    if(on)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current");
+  });
   setTrack(TAB_ORDER.indexOf(tab),true); // カルーセルを該当パネルへスライド（アニメ付き）
   if(changed)render();
   requestAnimationFrame(()=>fitViewport(false));
   if(opts.scroll!==false)window.scrollTo({top:0,behavior:"smooth"});
-}
-/* 現在タブから offset 分だけ隣のタブへ移動 */
-function moveTab(offset){
-  const i=TAB_ORDER.indexOf(state.tab);
-  const ni=i+offset;
-  if(ni<0||ni>=TAB_ORDER.length)return false;
-  switchTab(TAB_ORDER[ni],{scroll:false});
-  return true;
 }
 /* カルーセルのtrackを index 番目のパネルへ。animate=trueでアニメ、raw=trueでpx指定 */
 function setTrack(indexOrPx,animate,raw){
@@ -909,6 +852,40 @@ function applyBulk(){
 
 /* sheet */
 const scrim=document.getElementById("scrim"),sheet=document.getElementById("sheet");
+const impScrim=document.getElementById("impScrim"),impDlg=document.getElementById("impDlg");
+
+/* ===== モーダルのフォーカストラップ＋Escで閉じる（WCAG 2.4.3 / Nielsen 緊急脱出口） ===== */
+const FOCUSABLE='a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+let _activeDialog=null;      // {el, onClose, prevFocus}
+function _visibleFocusables(el){
+  return [...el.querySelectorAll(FOCUSABLE)].filter(n=>n.offsetParent!==null||n===document.activeElement);
+}
+function trapFocus(dialogEl,onClose){
+  _activeDialog={el:dialogEl,onClose,prevFocus:document.activeElement};
+  // 開いた直後に最初の入力欄へフォーカス（描画反映を待つ）
+  requestAnimationFrame(()=>{
+    const f=_visibleFocusables(dialogEl);
+    if(f.length)f[0].focus();
+  });
+}
+function releaseFocus(){
+  const prev=_activeDialog&&_activeDialog.prevFocus;
+  _activeDialog=null;
+  // 開く前にフォーカスしていた要素（FAB等）へ戻す
+  if(prev&&typeof prev.focus==="function"&&document.contains(prev))prev.focus();
+}
+document.addEventListener("keydown",e=>{
+  if(!_activeDialog)return;
+  if(e.key==="Escape"){e.preventDefault();_activeDialog.onClose();return;}
+  if(e.key==="Tab"){
+    const f=_visibleFocusables(_activeDialog.el);
+    if(!f.length)return;
+    const first=f[0],last=f[f.length-1];
+    if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+    else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+    else if(!_activeDialog.el.contains(document.activeElement)){e.preventDefault();first.focus();}
+  }
+});
 function fillCats(){const sel=document.getElementById("fCat");const list=formType==="支出"?CATS_EXP:CATS_INC;sel.innerHTML=list.map(c=>`<option>${c}</option>`).join("");}
 function setType(t){formType=t;document.querySelectorAll("#typeSeg button").forEach(b=>b.classList.toggle("on",b.dataset.t===t));fillCats();}
 function openSheet(id){
@@ -923,8 +900,9 @@ function openSheet(id){
   else{setType("支出");document.getElementById("fDate").value=new Date().toISOString().slice(0,10);
     document.getElementById("fAmt").value="";document.getElementById("fStore").value="";document.getElementById("fMeans").value="カード";}
   scrim.classList.add("on");sheet.classList.add("on");
+  trapFocus(sheet,closeSheet);
 }
-function closeSheet(){scrim.classList.remove("on");sheet.classList.remove("on");editId=null;}
+function closeSheet(){scrim.classList.remove("on");sheet.classList.remove("on");editId=null;releaseFocus();}
 function saveTxn(){
   const date=document.getElementById("fDate").value;
   const amt=parseInt(document.getElementById("fAmt").value,10);
@@ -1012,13 +990,15 @@ let pendingImport=null;
 function openImport(msg,rows,fresh){
   pendingImport={rows,fresh};
   document.getElementById("impMsg").textContent=msg;
-  document.getElementById("impScrim").classList.add("on");
-  document.getElementById("impDlg").classList.add("on");
+  impScrim.classList.add("on");
+  impDlg.classList.add("on");
+  trapFocus(impDlg,closeImport);
 }
 function closeImport(){
-  document.getElementById("impScrim").classList.remove("on");
-  document.getElementById("impDlg").classList.remove("on");
+  impScrim.classList.remove("on");
+  impDlg.classList.remove("on");
   pendingImport=null;
+  releaseFocus();
 }
 function doImportAppend(){
   if(!pendingImport)return;
@@ -1037,276 +1017,6 @@ function doImportReplace(){
 }
 
 let toastT;function toast(msg){const el=document.getElementById("toast");el.textContent=msg;el.classList.add("on");clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove("on"),2200);}
-
-/* ===== AI読み取り（WebLLM：端末内でLLM推論） ===== */
-const AI_MODEL="gemma-2-2b-jpn-it-q4f16_1-MLC"; // 日本語特化・軽量モデル
-let _aiEngine=null, _aiLoading=false, _aiParsed=[];
-
-function aiSupported(){return typeof navigator!=="undefined" && "gpu" in navigator;}
-/* PDFから文字を抽出（PDF.js / 文字埋め込みPDF対応）。スキャン画像PDFは文字が取れない */
-let _pdfLib=null;
-async function loadPdfLib(){
-  if(_pdfLib)return _pdfLib;
-  const lib=await import("https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/build/pdf.min.mjs");
-  lib.GlobalWorkerOptions.workerSrc="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/build/pdf.worker.min.mjs";
-  _pdfLib=lib;return lib;
-}
-async function extractPDF(file){
-  const lib=await loadPdfLib();
-  const data=await file.arrayBuffer();
-  const pdf=await lib.getDocument({data}).promise;
-  let out="";
-  for(let p=1;p<=pdf.numPages;p++){
-    const page=await pdf.getPage(p);
-    const tc=await page.getTextContent();
-    // y座標で行を組み立てる（同じ行のitemをまとめる）
-    let lastY=null,line="";
-    const lines=[];
-    tc.items.forEach(it=>{
-      if(!it.str)return;
-      const y=it.transform?it.transform[5]:null;
-      if(lastY!==null&&y!==null&&Math.abs(y-lastY)>3){lines.push(line.trim());line="";}
-      line+=it.str+" ";lastY=y;
-    });
-    if(line.trim())lines.push(line.trim());
-    out+=lines.join("\n")+"\n";
-  }
-  return out.trim();
-}
-/* Tesseract.js（OCR）ワーカー。jpn＋engで日本語・英数字を読む */
-let _ocrWorker=null;
-async function loadOCR(){
-  if(_ocrWorker)return _ocrWorker;
-  aiStatus("OCRエンジンを準備中…（初回のみ読み込みに時間がかかります）");
-  const T=await import("https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.esm.min.js");
-  const create=T.createWorker||(T.default&&T.default.createWorker);
-  const worker=await create("jpn+eng",1,{
-    logger:m=>{if(m.status==="recognizing text")aiProgress(m.progress);}
-  });
-  _ocrWorker=worker;return worker;
-}
-/* 画像（PNG/JPG）をOCR */
-async function ocrImage(src){
-  const worker=await loadOCR();
-  aiStatus("画像から文字を読み取り中…");
-  aiProgress(0);
-  const{data}=await worker.recognize(src);
-  aiProgress(null);
-  return(data&&data.text?data.text:"").trim();
-}
-/* 画像化PDF：各ページをcanvasにレンダリングしてからOCR */
-async function ocrPDF(file){
-  const lib=await loadPdfLib();
-  const worker=await loadOCR();
-  const data=await file.arrayBuffer();
-  const pdf=await lib.getDocument({data}).promise;
-  let out="";
-  for(let p=1;p<=pdf.numPages;p++){
-    aiStatus(`PDFをOCR中… ${p}/${pdf.numPages}ページ`);
-    aiProgress(0);
-    const page=await pdf.getPage(p);
-    const viewport=page.getViewport({scale:2.0}); // OCR精度のため拡大
-    const canvas=document.createElement("canvas");
-    canvas.width=viewport.width;canvas.height=viewport.height;
-    const ctx=canvas.getContext("2d");
-    await page.render({canvasContext:ctx,viewport}).promise;
-    const{data:res}=await worker.recognize(canvas);
-    out+=(res&&res.text?res.text:"")+"\n";
-    canvas.width=canvas.height=0; // メモリ解放
-  }
-  aiProgress(null);
-  return out.trim();
-}
-async function onAIFile(file){
-  if(!file)return;
-  const input=document.getElementById("aiInput");
-  const isPDF=file.type==="application/pdf"||/\.pdf$/i.test(file.name);
-  const isImage=(file.type&&file.type.startsWith("image/"))||/\.(png|jpe?g|webp|bmp|gif)$/i.test(file.name);
-  try{
-    if(isPDF){
-      aiStatus("PDFから文字を抽出中…");
-      let text="";
-      try{text=await extractPDF(file);}catch(_){text="";}
-      if(!text){
-        aiStatus("文字が埋め込まれていないPDFのため、OCRで読み取ります…");
-        text=await ocrPDF(file);
-      }
-      if(!text){aiStatus("このPDFからは文字を取り出せませんでした。");return;}
-      input.value=text;
-      aiStatus("PDFを読み込みました。内容を確認して『解析する』を押してください。");
-    }else if(isImage){
-      const url=URL.createObjectURL(file);
-      try{
-        const text=await ocrImage(url);
-        if(!text){aiStatus("画像から文字を読み取れませんでした。鮮明な画像で再度お試しください。");return;}
-        input.value=text;
-        aiStatus("画像を読み込みました。内容を確認して『解析する』を押してください。");
-      }finally{URL.revokeObjectURL(url);}
-    }else{
-      aiStatus("PDFまたは画像ファイルを選択してください。");
-    }
-  }catch(e){
-    aiProgress(null);
-    aiStatus("読み込みに失敗しました："+(e&&e.message?e.message:"不明なエラー"));
-  }
-}
-function aiStatus(msg){const el=document.getElementById("aiStatus");if(el)el.textContent=msg||"";}
-function aiProgress(p){ // p:0..1 or null
-  const wrap=document.getElementById("aiProgress"),bar=document.getElementById("aiProgressBar");
-  if(!wrap)return;
-  if(p==null){wrap.classList.remove("on");return;}
-  wrap.classList.add("on");bar.style.width=Math.round(p*100)+"%";
-}
-function openAI(){
-  document.getElementById("aiScrim").classList.add("on");
-  document.getElementById("aiSheet").classList.add("on");
-  document.getElementById("aiSetup").style.display="";
-  document.getElementById("aiResult").style.display="none";
-  if(!aiSupported()){
-    aiStatus("お使いの環境はWebGPU非対応のためAI読み取りを利用できません。Chrome／Edge、またはiOS 26以降のSafariでお試しください。");
-    document.getElementById("aiRun").disabled=true;
-  }else{
-    aiStatus(_aiEngine?"モデル準備完了。内容を貼り付けて解析してください。":"初回のみAIモデルのダウンロードが必要です（数百MB〜）。以降はキャッシュされます。");
-    document.getElementById("aiRun").disabled=false;
-  }
-}
-function closeAI(){
-  document.getElementById("aiScrim").classList.remove("on");
-  document.getElementById("aiSheet").classList.remove("on");
-}
-async function ensureEngine(){
-  if(_aiEngine)return _aiEngine;
-  if(_aiLoading)throw new Error("loading");
-  _aiLoading=true;
-  try{
-    aiStatus("AIエンジンを読み込み中…");aiProgress(0);
-    const webllm=await import("https://esm.run/@mlc-ai/web-llm");
-    _aiEngine=await webllm.CreateMLCEngine(AI_MODEL,{
-      initProgressCallback:(r)=>{
-        if(typeof r.progress==="number")aiProgress(r.progress);
-        aiStatus(r.text||"モデルを準備中…");
-      }
-    });
-    aiProgress(1);aiStatus("モデル準備完了。");
-    return _aiEngine;
-  }finally{_aiLoading=false;setTimeout(()=>aiProgress(null),600);}
-}
-function aiBuildPrompt(text){
-  const sys=`あなたは家計簿の入力補助AIです。入力されたクレジットカード明細やレシートのテキストから取引を抽出し、JSON配列だけを出力します。`
-    +`各取引は {"date":"YYYY-MM-DD","type":"支出"または"収入","store":"店舗名や内容","cat":"費目","amt":数値,"means":"カード"または"現金"または"振込"} の形式です。`
-    +`費目は支出なら次から選ぶ: ${CATS_EXP.join("、")}。収入なら次から選ぶ: ${CATS_INC.join("、")}。`
-    +`金額は数値のみ（カンマや円記号を除く）。日付が西暦でなければ${new Date().getFullYear()}年として補完。`
-    +`説明文や前置きは一切書かず、JSON配列のみを出力すること。`;
-  return [
-    {role:"system",content:sys},
-    {role:"user",content:"次の内容から取引を抽出してJSON配列で出力してください:\n\n"+text}
-  ];
-}
-function aiExtractJSON(s){
-  // ```json ... ``` や前後の説明を除去してJSON配列を取り出す
-  if(!s)return [];
-  let t=s.replace(/```json/gi,"```").replace(/```/g,"").trim();
-  const a=t.indexOf("["),b=t.lastIndexOf("]");
-  if(a>=0&&b>a)t=t.slice(a,b+1);
-  try{const arr=JSON.parse(t);return Array.isArray(arr)?arr:[];}catch(e){return [];}
-}
-function aiNormalize(arr){
-  const out=[];
-  arr.forEach(r=>{
-    if(!r||typeof r!=="object")return;
-    let date=String(r.date||"").trim();
-    const m=date.match(/(\d{4})\D(\d{1,2})\D(\d{1,2})/);
-    if(m)date=`${m[1]}-${String(m[2]).padStart(2,"0")}-${String(m[3]).padStart(2,"0")}`;
-    if(!/^\d{4}-\d{2}-\d{2}$/.test(date))return;
-    let type=(r.type==="収入")?"収入":"支出";
-    let amt=parseInt(String(r.amt).replace(/[^\d-]/g,""),10);
-    if(isNaN(amt))return;
-    const list=type==="支出"?CATS_EXP:CATS_INC;
-    let cat=list.includes(r.cat)?r.cat:(type==="支出"?"その他":"その他");
-    let means=["カード","現金","振込"].includes(r.means)?r.means:"カード";
-    out.push({date,type,store:String(r.store||"").trim()||"（内容不明）",cat,amt,means});
-  });
-  return out;
-}
-async function runAI(){
-  const text=document.getElementById("aiInput").value.trim();
-  if(!text){toast("内容を貼り付けてください");return;}
-  if(!aiSupported()){toast("この環境ではAI読み取りを利用できません");return;}
-  const runBtn=document.getElementById("aiRun");runBtn.disabled=true;
-  try{
-    const engine=await ensureEngine();
-    aiStatus("取引を解析中…（端末内で処理しています）");
-    const reply=await engine.chat.completions.create({messages:aiBuildPrompt(text),temperature:0});
-    const raw=reply.choices?.[0]?.message?.content||"";
-    const parsed=aiNormalize(aiExtractJSON(raw));
-    if(!parsed.length){aiStatus("取引を抽出できませんでした。表記を整えて再度お試しください。");runBtn.disabled=false;return;}
-    _aiParsed=parsed;renderAIResult();
-  }catch(e){
-    if(String(e&&e.message)==="loading")return;
-    aiStatus("解析に失敗しました："+(e&&e.message?e.message:"不明なエラー"));
-    runBtn.disabled=false;
-  }
-}
-function renderAIResult(){
-  document.getElementById("aiSetup").style.display="none";
-  document.getElementById("aiResult").style.display="";
-  document.getElementById("aiResultCount").textContent=_aiParsed.length+"件の取引を抽出";
-  const C=document.getElementById("aiRows");
-  C.innerHTML=_aiParsed.map((r,i)=>{
-    const catList=(r.type==="支出"?CATS_EXP:CATS_INC);
-    return `<div class="ai-row" data-i="${i}">
-      <div class="ai-row-top">
-        <input class="air-date" type="date" value="${r.date}">
-        <select class="air-type"><option${r.type==="支出"?" selected":""}>支出</option><option${r.type==="収入"?" selected":""}>収入</option></select>
-        <input class="air-store" type="text" value="${esc(r.store)}">
-        <button class="air-del" title="削除">✕</button>
-      </div>
-      <div class="ai-row-mid">
-        <select class="air-cat">${catList.map(c=>`<option${c===r.cat?" selected":""}>${c}</option>`).join("")}</select>
-        <input class="air-amt" type="number" value="${r.amt}">
-        <select class="air-means">${["カード","現金","振込"].map(m=>`<option${m===r.means?" selected":""}>${m}</option>`).join("")}</select>
-      </div>
-    </div>`;
-  }).join("");
-  // 種別変更で費目リストを切替
-  C.querySelectorAll(".ai-row").forEach(row=>{
-    const typeSel=row.querySelector(".air-type"),catSel=row.querySelector(".air-cat");
-    typeSel.addEventListener("change",()=>{
-      const list=typeSel.value==="支出"?CATS_EXP:CATS_INC;
-      catSel.innerHTML=list.map(c=>`<option>${c}</option>`).join("");
-    });
-    row.querySelector(".air-del").addEventListener("click",()=>{row.remove();});
-  });
-}
-function commitAI(){
-  const rows=[...document.getElementById("aiRows").querySelectorAll(".ai-row")];
-  if(!rows.length){toast("追加する取引がありません");return;}
-  const recs=[];
-  rows.forEach(row=>{
-    const date=row.querySelector(".air-date").value;
-    const type=row.querySelector(".air-type").value;
-    const store=row.querySelector(".air-store").value.trim();
-    const cat=row.querySelector(".air-cat").value;
-    const amt=parseInt(row.querySelector(".air-amt").value,10);
-    const means=row.querySelector(".air-means").value;
-    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||isNaN(amt)||!store)return;
-    recs.push({date,type,store,cat,amt,means});
-  });
-  if(!recs.length){toast("有効な取引がありません");return;}
-  // 既存と重複しないものだけ追加（内容の署名で判定）
-  const sigOf=r=>`${r.date}|${r.type}|${r.store}|${r.cat}|${r.amt}|${r.means}`;
-  const existingSig=new Set(DATA.map(sigOf));
-  let added=0;
-  recs.forEach(r=>{
-    const s=sigOf(r);
-    if(existingSig.has(s))return;          // 既存と同一内容はスキップ
-    existingSig.add(s);
-    DATA.push({...r,id:stableId(r,DATA)});  // 安定IDを採番して追加
-    added++;
-  });
-  save();state.month=null;update();closeAI();
-  toast(added>0?added+"件を台帳に追加しました":"すべて重複のため追加しませんでした");
-}
 
 /* events */
 const MODE_ORDER=["month","year","all"];
@@ -1366,9 +1076,9 @@ document.querySelectorAll("#axisSeg button").forEach(b=>b.addEventListener("clic
 document.querySelectorAll("#chartSeg button").forEach(b=>b.addEventListener("click",()=>{state.chart=b.dataset.chart;document.querySelectorAll("#chartSeg button").forEach(x=>x.classList.toggle("on",x===b));render();}));
 document.getElementById("monthSel").addEventListener("change",e=>{state.month=e.target.value;update();});
 document.getElementById("yearSel").addEventListener("change",e=>{state.year=e.target.value;update();});
-const searchEl=document.getElementById("search");
-searchEl.addEventListener("input",e=>{state.q=e.target.value.trim();document.getElementById("searchClear").classList.toggle("on",!!state.q);render();renderQF();});
-document.getElementById("searchClear").addEventListener("click",()=>{searchEl.value="";state.q="";document.getElementById("searchClear").classList.remove("on");render();renderQF();});
+const searchEl=document.getElementById("search"),searchClearEl=document.getElementById("searchClear");
+searchEl.addEventListener("input",e=>{state.q=e.target.value.trim();searchClearEl.classList.toggle("on",!!state.q);render();renderQF();});
+searchClearEl.addEventListener("click",()=>{searchEl.value="";state.q="";searchClearEl.classList.remove("on");render();renderQF();});
 document.getElementById("catFilter").addEventListener("change",e=>{state.catf=e.target.value;render();renderQF();});
 document.getElementById("fab").addEventListener("click",()=>openSheet(null));
 document.getElementById("cancelBtn").addEventListener("click",closeSheet);
@@ -1380,20 +1090,12 @@ document.getElementById("exportBtn").addEventListener("click",exportMD);
 document.getElementById("importBtn").addEventListener("click",()=>document.getElementById("fileInput").click());
 document.getElementById("fileInput").addEventListener("change",e=>{if(e.target.files[0])importMD(e.target.files[0]);e.target.value="";});
 document.getElementById("selBtn").addEventListener("click",()=>setSelMode(!selMode));
-document.getElementById("aiBtn").addEventListener("click",openAI);
-document.getElementById("aiPickFile").addEventListener("click",()=>document.getElementById("aiFileInput").click());
-document.getElementById("aiFileInput").addEventListener("change",e=>{if(e.target.files[0])onAIFile(e.target.files[0]);e.target.value="";});
-document.getElementById("aiCancel").addEventListener("click",closeAI);
-document.getElementById("aiScrim").addEventListener("click",closeAI);
-document.getElementById("aiRun").addEventListener("click",runAI);
-document.getElementById("aiBack").addEventListener("click",()=>{document.getElementById("aiSetup").style.display="";document.getElementById("aiResult").style.display="none";document.getElementById("aiRun").disabled=false;});
-document.getElementById("aiCommit").addEventListener("click",commitAI);
 document.getElementById("bulkClose").addEventListener("click",()=>setSelMode(false));
 document.getElementById("bulkApply").addEventListener("click",applyBulk);
 document.getElementById("impAppend").addEventListener("click",doImportAppend);
 document.getElementById("impReplace").addEventListener("click",doImportReplace);
 document.getElementById("impCancel").addEventListener("click",closeImport);
-document.getElementById("impScrim").addEventListener("click",closeImport);
+impScrim.addEventListener("click",closeImport);
 document.querySelectorAll("#tabbar .tabbtn").forEach(b=>b.addEventListener("click",e=>{
   if(suppressTabClick){suppressTabClick=false;return;} // なぞり操作直後のclickは無視
   switchTab(b.dataset.tab);
