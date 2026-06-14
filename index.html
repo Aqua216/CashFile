@@ -179,10 +179,59 @@ footer{margin-top:42px;padding:16px 6px 0;border-top:1px solid var(--stroke);fon
   padding:11px 20px;border-radius:14px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:.3s;white-space:nowrap;max-width:90vw;text-align:center}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 
+/* delta (前月比) */
+.delta{font-size:11px;font-weight:700;margin-left:7px;padding:1px 7px;border-radius:20px;vertical-align:middle;white-space:nowrap}
+.delta.up{color:#ff9a7a;background:rgba(255,138,107,.15)}
+.delta.down{color:#6fe3b0;background:rgba(111,227,176,.15)}
+.delta.flat{color:var(--txt-faint);background:var(--glass)}
+.card .sub .delta{margin-left:0}
+
+/* axis / chart toggle small segs */
+.minirow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:13px}
+.seg.mini button{font-size:12px;padding:6px 12px}
+
+/* donut */
+.chartbox{display:flex;gap:18px;align-items:center;padding:18px 16px;flex-wrap:wrap;justify-content:center}
+.donut-wrap{position:relative;flex:0 0 auto}
+.donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+.donut-center .dc-lbl{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--txt-faint);font-weight:600}
+.donut-center .dc-val{font-size:17px;font-weight:700;margin-top:2px}
+.donut-legend{flex:1;min-width:160px;display:flex;flex-direction:column;gap:7px}
+.dl-row{display:flex;align-items:center;gap:9px;font-size:13px;cursor:pointer;padding:3px 4px;border-radius:9px;transition:.2s}
+.dl-row:active{background:var(--glass-hi)}
+.dl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;box-shadow:0 0 8px currentColor}
+.dl-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dl-pct{color:var(--txt-dim);font-size:12px;min-width:42px;text-align:right}
+.donut-seg{transition:opacity .2s,stroke-width .2s;cursor:pointer}
+.donut-seg:hover{opacity:.85}
+
+/* quick filters */
+.qfbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;align-items:center}
+.qfchip{font-family:inherit;font-size:12px;font-weight:600;padding:7px 13px;border-radius:20px;border:1px solid var(--stroke);background:var(--glass);color:var(--txt-dim);cursor:pointer;transition:.2s;display:inline-flex;align-items:center;gap:6px}
+.qfchip:active{transform:scale(.95)}
+.qfchip.on{color:#fff;border-color:var(--stroke-hi);background:var(--glass-hi)}
+.qfchip .qfx{font-size:13px;color:var(--txt-faint);margin-left:2px}
+.qfchip.add{border-style:dashed;color:var(--txt-faint)}
+
+/* year summary */
+.yearbox{padding:18px 16px}
+.ygrid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:18px}
+.ystat{padding:14px;border-radius:16px;background:var(--glass);border:1px solid var(--stroke)}
+.ystat .yl{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--txt-faint);font-weight:600}
+.ystat .yv{font-size:20px;font-weight:700;margin-top:7px;letter-spacing:-.02em}
+.ystat .ys{font-size:12px;color:var(--txt-dim);margin-top:5px}
+.ymonths{display:flex;flex-direction:column;gap:7px}
+.ymrow{display:flex;align-items:center;gap:11px;font-size:13px;cursor:pointer;padding:4px 2px}
+.ymname{min-width:54px;font-weight:600;color:var(--txt-dim)}
+.ymbarwrap{flex:1;height:8px;background:rgba(255,255,255,.08);border-radius:20px;overflow:hidden}
+.ymbar{height:100%;border-radius:20px;background:linear-gradient(90deg,rgba(123,140,255,.9),rgba(214,90,214,.7));transition:width .6s cubic-bezier(.2,.7,.2,1)}
+.ymamt{min-width:80px;text-align:right;font-weight:700}
+
 @media(max-width:640px){
   .summary{grid-template-columns:1fr}
   .cname{min-width:64px;font-size:13px}.camt{min-width:72px}.cpct{display:none}
   .controls .selwrap{order:3}
+  .ygrid{grid-template-columns:1fr}
 }
 @media(prefers-reduced-motion:reduce){.bg::before,.bg::after{animation:none}*{transition-duration:.01ms!important}}
 </style>
@@ -206,10 +255,12 @@ footer{margin-top:42px;padding:16px 6px 0;border-top:1px solid var(--stroke);fon
 <div class="controls">
   <div class="seg glass" id="modeSeg">
     <button data-mode="month" class="on">月別</button>
+    <button data-mode="year">年別</button>
     <button data-mode="all">全期間</button>
   </div>
   <div class="spacer"></div>
-  <div class="selwrap glass"><select id="monthSel"></select></div>
+  <div class="selwrap glass" id="monthSelWrap"><select id="monthSel"></select></div>
+  <div class="selwrap glass" id="yearSelWrap" style="display:none"><select id="yearSel"></select></div>
   <div class="seg glass" id="sortSeg">
     <button data-sort="amt" class="on">金額順</button>
     <button data-sort="name">名前順</button>
@@ -225,6 +276,8 @@ footer{margin-top:42px;padding:16px 6px 0;border-top:1px solid var(--stroke);fon
   <div class="catfilter selwrap glass"><select id="catFilter"><option value="">全費目</option></select></div>
 </div>
 
+<div class="qfbar" id="qfbar"></div>
+
 <div class="summary">
   <div class="card glass exp"><div class="sheen"></div><div class="lbl">支出</div><div class="val tnum" id="sExp">¥0</div><div class="sub" id="sExpSub"></div></div>
   <div class="card glass inc"><div class="sheen"></div><div class="lbl">収入</div><div class="val tnum" id="sInc">¥0</div><div class="sub" id="sIncSub"></div></div>
@@ -234,7 +287,29 @@ footer{margin-top:42px;padding:16px 6px 0;border-top:1px solid var(--stroke);fon
 <div class="sec"><h2>月別支出推移</h2><span class="hint">タップで月選択</span></div>
 <div class="trendbox glass"><div class="trend" id="trend"></div><div class="trend-legend" id="trendLegend"></div></div>
 
-<div class="sec"><h2 id="catTitle">カテゴリ別支出</h2><span class="hint" id="catHint">タップで明細</span></div>
+<div id="yearSummary" style="display:none">
+  <div class="sec"><h2 id="yearTitle">年間サマリー</h2><span class="hint">タップで月へ</span></div>
+  <div class="yearbox glass">
+    <div class="ygrid" id="yGrid"></div>
+    <div class="ymonths" id="yMonths"></div>
+  </div>
+</div>
+
+<div class="sec">
+  <h2 id="catTitle">カテゴリ別支出</h2>
+  <span class="hint" id="catHint">タップで明細</span>
+</div>
+<div class="minirow">
+  <div class="seg mini glass" id="axisSeg">
+    <button data-axis="cat" class="on">費目別</button>
+    <button data-axis="means">手段別</button>
+  </div>
+  <div class="seg mini glass" id="chartSeg">
+    <button data-chart="bar" class="on">バー</button>
+    <button data-chart="donut">円</button>
+  </div>
+</div>
+<div class="chartbox glass" id="donutBox" style="display:none"></div>
 <div class="cats" id="cats"></div>
 
 <footer>
@@ -298,14 +373,39 @@ const COLORS={"食費":"#7be0a3","外食・交際費":"#ff8a6b","趣味・娯楽
 const yen=n=>"¥"+n.toLocaleString("ja-JP");
 
 let DATA=load();
-let state={mode:"month",month:null,sort:"amt",q:"",catf:""};
+let state={mode:"month",month:null,year:null,sort:"amt",q:"",catf:"",axis:"cat",chart:"bar"};
 let editId=null, formType="支出";
 let selMode=false; let picked=new Set();
+
+const QFKEY="zaimu_quickfilters_v1";
+function loadQF(){try{const s=localStorage.getItem(QFKEY);if(s){const a=JSON.parse(s);if(Array.isArray(a))return a;}}catch(e){}return [];}
+function saveQF(){try{localStorage.setItem(QFKEY,JSON.stringify(QF));}catch(e){}}
+let QF=loadQF();
 
 function load(){try{const s=localStorage.getItem(KEY);if(s){const a=JSON.parse(s);if(Array.isArray(a))return a;}}catch(e){}return SEED.map((r,i)=>({...r,id:"s"+i}));}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(DATA));}catch(e){toast("保存に失敗しました");}}
 function uid(){return "x"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+/* 安定ID：取引内容から再現性のあるハッシュを生成。
+   同一署名（日付・種別・店舗・費目・金額・手段が完全一致）の取引が複数あっても、
+   出現順の連番を加えて衝突しないようにする。これにより .md 書き出し→読み込みで
+   同じ取引が同じ id に復元され、バックアップ無しでもデータ同一性が保たれる。 */
+function hash32(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0).toString(36);}
+function assignStableIds(rows){
+  const seen={};
+  return rows.map(r=>{
+    const base=`${r.date}|${r.type}|${r.store}|${r.cat}|${r.amt}|${r.means}`;
+    const k=(seen[base]=(seen[base]||0)+1)-1;
+    return {...r,id:"h"+hash32(base+"#"+k)};
+  });
+}
+/* 1件分の安定IDを、既存データ内の同一署名件数を考慮して採番する */
+function stableId(r,within){
+  const base=`${r.date}|${r.type}|${r.store}|${r.cat}|${r.amt}|${r.means}`;
+  let k=0;within.forEach(x=>{if(`${x.date}|${x.type}|${x.store}|${x.cat}|${x.amt}|${x.means}`===base)k++;});
+  return "h"+hash32(base+"#"+k);
+}
 const monthsOf=()=>[...new Set(DATA.map(r=>r.date.slice(0,7)))].sort();
+const yearsOf=()=>[...new Set(DATA.map(r=>r.date.slice(0,4)))].sort();
 const fmtMonth=m=>m.replace("-","年")+"月";
 
 function rebuildMonths(){
@@ -316,6 +416,14 @@ function rebuildMonths(){
   ms.forEach(m=>{const o=document.createElement("option");o.value=m;o.textContent=m.replace("-","/");sel.appendChild(o);});
   if(state.month)sel.value=state.month;
   document.getElementById("range").textContent=ms.length?`${ms[0].replace("-","年")}月 〜 ${ms[ms.length-1].replace("-","年")}月 ・ 全${DATA.length}件`:"データなし";
+}
+function rebuildYears(){
+  const ys=yearsOf();
+  if(!ys.length){state.year=null;}
+  else if(!state.year||!ys.includes(state.year))state.year=ys[ys.length-1];
+  const sel=document.getElementById("yearSel");sel.innerHTML="";
+  ys.forEach(y=>{const o=document.createElement("option");o.value=y;o.textContent=y+"年";sel.appendChild(o);});
+  if(state.year)sel.value=state.year;
 }
 function buildCatFilter(){
   const sel=document.getElementById("catFilter");const cur=state.catf;
@@ -329,12 +437,16 @@ function matchQ(r){
   return true;
 }
 const activeRows=()=>{
-  let rows=state.mode==="all"?DATA:DATA.filter(r=>r.date.slice(0,7)===state.month);
+  let rows;
+  if(state.mode==="all")rows=DATA;
+  else if(state.mode==="year")rows=DATA.filter(r=>r.date.slice(0,4)===state.year);
+  else rows=DATA.filter(r=>r.date.slice(0,7)===state.month);
   return rows.filter(matchQ);
 };
 
 function render(){
-  document.getElementById("monthSel").parentElement.style.display=state.mode==="month"?"":"none";
+  document.getElementById("monthSelWrap").style.display=state.mode==="month"?"":"none";
+  document.getElementById("yearSelWrap").style.display=state.mode==="year"?"":"none";
   const rows=activeRows();
   const exp=rows.filter(r=>r.type==="支出"), inc=rows.filter(r=>r.type==="収入");
   const eT=exp.reduce((s,r)=>s+r.amt,0), iT=inc.reduce((s,r)=>s+r.amt,0), net=iT-eT;
@@ -342,26 +454,42 @@ function render(){
   document.getElementById("sInc").textContent=yen(iT);
   const ne=document.getElementById("sNet");ne.textContent=(net<0?"−":"+")+yen(Math.abs(net)).slice(1);
   ne.className="val tnum "+(net<0?"neg":"pos");
-  document.getElementById("sExpSub").textContent=exp.length+"件";
-  document.getElementById("sIncSub").textContent=inc.length+"件";
-  const scope=(state.mode==="all"?"全期間":(state.month?fmtMonth(state.month):"—"));
+
+  // 前月比（月別モードかつ絞り込みなしのとき）
+  const prev=prevPeriodTotals();
+  document.getElementById("sExpSub").innerHTML=exp.length+"件"+deltaTag(eT,prev.exp,true);
+  document.getElementById("sIncSub").innerHTML=inc.length+"件"+deltaTag(iT,prev.inc,false);
+
+  const scope=(state.mode==="all"?"全期間":state.mode==="year"?(state.year+"年"):(state.month?fmtMonth(state.month):"—"));
   const filt=(state.q||state.catf)?"（絞込）":"";
   document.getElementById("sNetSub").textContent=scope+filt;
-  document.getElementById("catTitle").textContent=scope+" のカテゴリ別支出";
+  const axisLbl=state.axis==="means"?"手段別支出":"カテゴリ別支出";
+  document.getElementById("catTitle").textContent=scope+" の"+axisLbl;
   document.getElementById("fcount").textContent="表示中 "+rows.length+"件";
 
+  // 集計軸：費目 or 手段
+  const keyFn=state.axis==="means"?(r=>r.means||"不明"):(r=>r.cat);
   const byCat={};
-  exp.forEach(r=>{(byCat[r.cat]=byCat[r.cat]||[]).push(r);});
+  exp.forEach(r=>{const k=keyFn(r);(byCat[k]=byCat[k]||[]).push(r);});
   let cats=Object.keys(byCat).map(c=>({cat:c,total:byCat[c].reduce((s,r)=>s+r.amt,0),items:byCat[c].slice().sort((a,b)=>a.date<b.date?1:-1),n:byCat[c].length}));
   cats.sort(state.sort==="amt"?(a,b)=>b.total-a.total:(a,b)=>a.cat.localeCompare(b.cat,"ja"));
   const max=Math.max(1,...cats.map(c=>c.total));
+
+  // 円グラフ or バー
+  renderDonut(cats,eT);
+  const barOn=state.chart==="bar";
+  document.getElementById("cats").style.display=barOn?"":"none";
+  document.getElementById("donutBox").style.display=barOn?"none":(cats.length?"flex":"none");
+  if(!barOn){document.getElementById("catHint").textContent="凡例タップで明細へ";}
+  else if(!selMode){document.getElementById("catHint").textContent="タップで明細";}
+
   const C=document.getElementById("cats");
   const openSet=new Set([...C.querySelectorAll(".catrow.open")].map(e=>e.dataset.cat));
   if(selMode||state.q||state.catf)cats.forEach(c=>openSet.add(c.cat));
   C.innerHTML="";C.classList.toggle("selmode",selMode);
   if(!cats.length){C.innerHTML='<div class="glass" style="padding:26px 22px;text-align:center;color:var(--txt-dim);line-height:1.9">まだ取引がありません。<br>右下の <b style="color:#fff">＋</b> ボタンから最初の取引を追加するか、<br>「⬇ .md読み込み」で既存の台帳を取り込めます。</div>';}
   cats.forEach(c=>{
-    const pct=eT?c.total/eT*100:0, col=COLORS[c.cat]||"#b8b0a0";
+    const pct=eT?c.total/eT*100:0, col=colorOf(c.cat);
     const row=document.createElement("div");row.className="catrow glass";row.dataset.cat=c.cat;
     row.innerHTML=`<div class="top">
         <span class="dot" style="background:${col};color:${col}"></span>
@@ -392,6 +520,162 @@ function render(){
 }
 function esc(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 
+/* 色解決：費目はパレット、それ以外は名前から安定生成 */
+const _palette=["#7be0a3","#ff8a6b","#c08af0","#6cb6ff","#ffd166","#5ad0e0","#ff7aa8","#ffae6b","#9ae66e","#a8b0c0"];
+function colorOf(name){
+  if(COLORS[name])return COLORS[name];
+  let h=0;for(let i=0;i<name.length;i++)h=(h*31+name.charCodeAt(i))>>>0;
+  return _palette[h%_palette.length];
+}
+
+/* 前月比／前年比：絞り込みがあるときは無効 */
+function prevPeriodTotals(){
+  if(state.q||state.catf||state.mode==="all")return {exp:null,inc:null};
+  let prevRows=null;
+  if(state.mode==="month"&&state.month){
+    const d=new Date(state.month+"-01T00:00:00");d.setMonth(d.getMonth()-1);
+    const pm=d.toISOString().slice(0,7);
+    prevRows=DATA.filter(r=>r.date.slice(0,7)===pm);
+  }else if(state.mode==="year"&&state.year){
+    const py=String(parseInt(state.year,10)-1);
+    prevRows=DATA.filter(r=>r.date.slice(0,4)===py);
+  }
+  if(!prevRows)return {exp:null,inc:null};
+  return {
+    exp:prevRows.filter(r=>r.type==="支出").reduce((s,r)=>s+r.amt,0),
+    inc:prevRows.filter(r=>r.type==="収入").reduce((s,r)=>s+r.amt,0)
+  };
+}
+/* expIsBad: 支出は増=悪(赤)、収入は増=良(緑) */
+function deltaTag(cur,prev,expIsBad){
+  if(prev==null||prev===0)return "";
+  const diff=cur-prev, pct=diff/prev*100;
+  const cls=Math.abs(pct)<0.5?"flat":(diff>0?(expIsBad?"up":"down"):(expIsBad?"down":"up"));
+  const arrow=diff>0?"▲":diff<0?"▼":"＝";
+  const lbl=state.mode==="year"?"前年":"前月";
+  return `<span class="delta ${cls}">${arrow}${Math.abs(pct).toFixed(0)}% <span style="opacity:.7">${lbl}比</span></span>`;
+}
+
+/* 円（ドーナツ）グラフ */
+function renderDonut(cats,total){
+  const box=document.getElementById("donutBox");
+  if(state.chart!=="donut"||!cats.length){box.innerHTML="";return;}
+  const size=168,sw=26,r=(size-sw)/2,cx=size/2,cy=size/2,circ=2*Math.PI*r;
+  let off=0;const segs=cats.map(c=>{
+    const frac=total?c.total/total:0;const len=frac*circ;
+    const col=colorOf(c.cat);
+    const s=`<circle class="donut-seg" data-cat="${esc(c.cat)}" cx="${cx}" cy="${cy}" r="${r}" fill="none"
+      stroke="${col}" stroke-width="${sw}" stroke-dasharray="${len} ${circ-len}"
+      stroke-dashoffset="${-off}" transform="rotate(-90 ${cx} ${cy})"
+      stroke-linecap="butt"><title>${esc(c.cat)} ${yen(c.total)}</title></circle>`;
+    off+=len;return s;
+  }).join("");
+  const legend=cats.map(c=>{
+    const pct=total?(c.total/total*100):0;
+    return `<div class="dl-row" data-cat="${esc(c.cat)}">
+      <span class="dl-dot" style="background:${colorOf(c.cat)};color:${colorOf(c.cat)}"></span>
+      <span class="dl-name">${esc(c.cat)}</span>
+      <span class="dl-pct">${pct.toFixed(1)}%</span></div>`;
+  }).join("");
+  box.innerHTML=`<div class="donut-wrap">
+      <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="${sw}"/>
+        ${segs}</svg>
+      <div class="donut-center"><div class="dc-lbl">支出計</div><div class="dc-val tnum">${yen(total)}</div></div>
+    </div>
+    <div class="donut-legend">${legend}</div>`;
+  // 凡例/セグメントタップ → バー表示に戻してその費目を開く
+  box.querySelectorAll("[data-cat]").forEach(el=>el.addEventListener("click",()=>{
+    const cat=el.dataset.cat;state.chart="bar";
+    document.querySelectorAll("#chartSeg button").forEach(b=>b.classList.toggle("on",b.dataset.chart==="bar"));
+    render();
+    requestAnimationFrame(()=>{
+      const row=document.querySelector(`.catrow[data-cat="${CSS.escape(cat)}"]`);
+      if(row&&!row.classList.contains("open")){row.querySelector(".top").click();row.scrollIntoView({behavior:"smooth",block:"center"});}
+    });
+  }));
+}
+
+/* 年間サマリー */
+function renderYearSummary(){
+  const box=document.getElementById("yearSummary");
+  if(state.mode!=="year"||!state.year){box.style.display="none";return;}
+  box.style.display="";
+  const y=state.year;
+  const rows=DATA.filter(r=>r.date.slice(0,4)===y);
+  const exp=rows.filter(r=>r.type==="支出"),inc=rows.filter(r=>r.type==="収入");
+  const eT=exp.reduce((s,r)=>s+r.amt,0),iT=inc.reduce((s,r)=>s+r.amt,0);
+  // 費目別トップ
+  const byCat={};exp.forEach(r=>byCat[r.cat]=(byCat[r.cat]||0)+r.amt);
+  const top=Object.entries(byCat).sort((a,b)=>b[1]-a[1])[0];
+  // 月別
+  const mAgg={};exp.forEach(r=>{const m=r.date.slice(0,7);mAgg[m]=(mAgg[m]||0)+r.amt;});
+  const monthsActive=Object.keys(mAgg).length||1;
+  const avg=Math.round(eT/monthsActive);
+  document.getElementById("yearTitle").textContent=y+"年 年間サマリー";
+  document.getElementById("yGrid").innerHTML=`
+    <div class="ystat"><div class="yl">年間支出</div><div class="yv tnum" style="color:var(--exp)">${yen(eT)}</div><div class="ys">${exp.length}件 / 月平均 ${yen(avg)}</div></div>
+    <div class="ystat"><div class="yl">年間収入</div><div class="yv tnum" style="color:var(--inc)">${yen(iT)}</div><div class="ys">${inc.length}件</div></div>
+    <div class="ystat"><div class="yl">年間収支</div><div class="yv tnum" style="color:${iT-eT<0?'var(--exp)':'var(--inc)'}">${(iT-eT<0?"−":"+")+yen(Math.abs(iT-eT)).slice(1)}</div><div class="ys">${state.year}年 通年</div></div>
+    <div class="ystat"><div class="yl">最多支出費目</div><div class="yv">${top?esc(top[0]):"—"}</div><div class="ys">${top?yen(top[1]):""}</div></div>`;
+  // 12ヶ月バー
+  const maxM=Math.max(1,...Object.values(mAgg));
+  let html="";
+  for(let m=1;m<=12;m++){
+    const key=`${y}-${String(m).padStart(2,"0")}`;const v=mAgg[key]||0;
+    html+=`<div class="ymrow" data-m="${key}">
+      <span class="ymname">${m}月</span>
+      <div class="ymbarwrap"><div class="ymbar" style="width:${v/maxM*100}%"></div></div>
+      <span class="ymamt tnum">${v?yen(v):"—"}</span></div>`;
+  }
+  const ym=document.getElementById("yMonths");ym.innerHTML=html;
+  ym.querySelectorAll(".ymrow").forEach(r=>r.addEventListener("click",()=>{
+    const m=r.dataset.m;if(!monthsOf().includes(m))return;
+    state.mode="month";state.month=m;
+    document.querySelectorAll("#modeSeg button").forEach(b=>b.classList.toggle("on",b.dataset.mode==="month"));
+    document.getElementById("monthSel").value=m;update();
+  }));
+}
+
+/* クイックフィルタ */
+function renderQF(){
+  const bar=document.getElementById("qfbar");
+  const curActive=QF.findIndex(f=>f.q===state.q&&f.catf===state.catf)&&(state.q||state.catf);
+  let html=QF.map((f,i)=>{
+    const on=(f.q===state.q&&f.catf===state.catf)&&(state.q||state.catf);
+    return `<button class="qfchip ${on?'on':''}" data-qf="${i}">${esc(f.name)}<span class="qfx" data-del="${i}">✕</span></button>`;
+  }).join("");
+  // 現在の絞り込みが未保存なら「＋保存」チップ
+  const hasFilter=state.q||state.catf;
+  const alreadySaved=QF.some(f=>f.q===state.q&&f.catf===state.catf);
+  if(hasFilter&&!alreadySaved)html+=`<button class="qfchip add" id="qfAdd">＋ この絞込を保存</button>`;
+  bar.innerHTML=html;
+  bar.style.display=(QF.length||hasFilter)?"flex":"none";
+  bar.querySelectorAll("[data-qf]").forEach(b=>b.addEventListener("click",e=>{
+    if(e.target.dataset.del!==undefined)return;
+    const f=QF[+b.dataset.qf];applyQF(f);
+  }));
+  bar.querySelectorAll("[data-del]").forEach(x=>x.addEventListener("click",e=>{
+    e.stopPropagation();QF.splice(+x.dataset.del,1);saveQF();renderQF();
+  }));
+  const add=document.getElementById("qfAdd");
+  if(add)add.addEventListener("click",()=>{
+    const parts=[];if(state.catf)parts.push(state.catf);if(state.q)parts.push(`"${state.q}"`);
+    const def=parts.join(" ");
+    const name=prompt("クイックフィルタの名前",def);
+    if(name===null)return;
+    QF.push({name:name.trim()||def||"フィルタ",q:state.q,catf:state.catf});
+    saveQF();renderQF();toast("クイックフィルタを保存しました");
+  });
+}
+function applyQF(f){
+  state.q=f.q;state.catf=f.catf;
+  const se=document.getElementById("search");se.value=f.q;
+  document.getElementById("searchClear").classList.toggle("on",!!f.q);
+  document.getElementById("catFilter").value=f.catf;
+  render();renderQF();
+}
+
 function renderTrend(){
   const ms=monthsOf();
   const mt=ms.map(m=>({m,total:DATA.filter(r=>r.type==="支出"&&r.date.slice(0,7)===m).reduce((s,r)=>s+r.amt,0)}));
@@ -408,7 +692,7 @@ function renderTrend(){
   const avg=mt.length?mt.reduce((s,x)=>s+x.total,0)/mt.length:0;
   document.getElementById("trendLegend").textContent="月平均支出 "+yen(Math.round(avg));
 }
-function update(){rebuildMonths();buildCatFilter();renderTrend();render();}
+function update(){rebuildMonths();rebuildYears();buildCatFilter();renderTrend();renderYearSummary();render();renderQF();}
 
 /* bulk edit */
 function setSelMode(on){selMode=on;picked.clear();
@@ -452,8 +736,8 @@ function saveTxn(){
   if(!date){toast("日付を入力してください");return;}
   if(isNaN(amt)){toast("金額を入力してください");return;}
   if(!store){toast("店舗・内容を入力してください");return;}
-  if(editId){const r=DATA.find(x=>x.id===editId);Object.assign(r,{date,type:formType,store,cat,amt,means});toast("更新しました");}
-  else{DATA.push({id:uid(),date,type:formType,store,cat,amt,means});toast("追加しました");state.month=date.slice(0,7);state.mode="month";document.querySelectorAll("#modeSeg button").forEach(b=>b.classList.toggle("on",b.dataset.mode==="month"));}
+  if(editId){const r=DATA.find(x=>x.id===editId);Object.assign(r,{date,type:formType,store,cat,amt,means});r.id=stableId({date,type:formType,store,cat,amt,means},DATA.filter(x=>x!==r));toast("更新しました");}
+  else{const rec={date,type:formType,store,cat,amt,means};rec.id=stableId(rec,DATA);DATA.push(rec);toast("追加しました");state.month=date.slice(0,7);state.mode="month";document.querySelectorAll("#modeSeg button").forEach(b=>b.classList.toggle("on",b.dataset.mode==="month"));}
   save();closeSheet();update();
 }
 function delTxn(){if(!editId)return;if(!confirm("この取引を削除しますか？"))return;DATA=DATA.filter(x=>x.id!==editId);save();closeSheet();toast("削除しました");update();}
@@ -465,6 +749,8 @@ function buildMD(){
 ## このファイルの使い方 / AIへの運用指示
 
 このファイルは個人の財務管理台帳です。チャットにこのファイル（または中身全文）を貼り付けたら、AIは内容を読み取り適切なカテゴリへ分類して取引テーブル末尾に追記し、更新版.mdを出力する運用とする。
+
+このファイルはアプリ（CashFile）のデータそのものであり、バックアップも兼ねる。アプリの「⬇ .md読み込み」で全置き換えすれば、この内容に完全復元できる。各取引のIDは内容から再生成されるため、書き出し→読み込みで同一性が保たれる。
 
 ## 台帳フォーマット
 
@@ -496,7 +782,8 @@ function buildMD(){
 }
 function exportMD(){
   const blob=new Blob([buildMD()],{type:"text/markdown"});const url=URL.createObjectURL(blob);
-  const a=document.createElement("a");a.href=url;a.download="財務台帳.md";document.body.appendChild(a);a.click();a.remove();
+  const stamp=new Date().toISOString().slice(0,10);
+  const a=document.createElement("a");a.href=url;a.download=`CashFile-${stamp}.md`;document.body.appendChild(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),1000);toast(".mdを書き出しました");
 }
 function parseMD(text){
@@ -509,13 +796,13 @@ function parseMD(text){
     if(isNaN(n))return;
     out.push({date:d,type:t,store,cat,amt:n,means});});return out;
 }
-const sig=r=>`${r.date}|${r.type}|${r.store}|${r.cat}|${r.amt}`;
 function importMD(file){
   const r=new FileReader();
-  r.onload=()=>{const rows=parseMD(r.result);
-    if(!rows.length){toast("取引が見つかりませんでした");return;}
-    const existing=new Set(DATA.map(sig));
-    const fresh=rows.filter(x=>!existing.has(sig(x)));
+  r.onload=()=>{const parsed=parseMD(r.result);
+    if(!parsed.length){toast("取引が見つかりませんでした");return;}
+    const rows=assignStableIds(parsed);
+    const existing=new Set(DATA.map(x=>x.id));
+    const fresh=rows.filter(x=>!existing.has(x.id));
     const dup=rows.length-fresh.length;
     let msg=`${rows.length}件の取引を読み込みました。\nうち新規 ${fresh.length}件`;
     if(dup>0)msg+=`（重複 ${dup}件）`;
@@ -540,14 +827,14 @@ function doImportAppend(){
   if(!pendingImport)return;
   const {fresh}=pendingImport;
   if(!fresh.length){toast("新規データはありませんでした");closeImport();return;}
-  fresh.forEach(x=>DATA.push({...x,id:uid()}));
+  fresh.forEach(x=>DATA.push({...x}));
   toast(fresh.length+"件を追記しました");
   save();state.month=null;update();closeImport();
 }
 function doImportReplace(){
   if(!pendingImport)return;
   const {rows}=pendingImport;
-  DATA=rows.map(x=>({...x,id:uid()}));
+  DATA=rows.map(x=>({...x}));
   toast(rows.length+"件で置き換えました");
   save();state.month=null;update();closeImport();
 }
@@ -557,11 +844,14 @@ let toastT;function toast(msg){const el=document.getElementById("toast");el.text
 /* events */
 document.querySelectorAll("#modeSeg button").forEach(b=>b.addEventListener("click",()=>{state.mode=b.dataset.mode;document.querySelectorAll("#modeSeg button").forEach(x=>x.classList.toggle("on",x===b));update();}));
 document.querySelectorAll("#sortSeg button").forEach(b=>b.addEventListener("click",()=>{state.sort=b.dataset.sort;document.querySelectorAll("#sortSeg button").forEach(x=>x.classList.toggle("on",x===b));render();}));
+document.querySelectorAll("#axisSeg button").forEach(b=>b.addEventListener("click",()=>{state.axis=b.dataset.axis;document.querySelectorAll("#axisSeg button").forEach(x=>x.classList.toggle("on",x===b));render();}));
+document.querySelectorAll("#chartSeg button").forEach(b=>b.addEventListener("click",()=>{state.chart=b.dataset.chart;document.querySelectorAll("#chartSeg button").forEach(x=>x.classList.toggle("on",x===b));render();}));
 document.getElementById("monthSel").addEventListener("change",e=>{state.month=e.target.value;update();});
+document.getElementById("yearSel").addEventListener("change",e=>{state.year=e.target.value;update();});
 const searchEl=document.getElementById("search");
-searchEl.addEventListener("input",e=>{state.q=e.target.value.trim();document.getElementById("searchClear").classList.toggle("on",!!state.q);render();});
-document.getElementById("searchClear").addEventListener("click",()=>{searchEl.value="";state.q="";document.getElementById("searchClear").classList.remove("on");render();});
-document.getElementById("catFilter").addEventListener("change",e=>{state.catf=e.target.value;render();});
+searchEl.addEventListener("input",e=>{state.q=e.target.value.trim();document.getElementById("searchClear").classList.toggle("on",!!state.q);render();renderQF();});
+document.getElementById("searchClear").addEventListener("click",()=>{searchEl.value="";state.q="";document.getElementById("searchClear").classList.remove("on");render();renderQF();});
+document.getElementById("catFilter").addEventListener("change",e=>{state.catf=e.target.value;render();renderQF();});
 document.getElementById("fab").addEventListener("click",()=>openSheet(null));
 document.getElementById("cancelBtn").addEventListener("click",closeSheet);
 document.getElementById("scrim").addEventListener("click",closeSheet);
@@ -578,6 +868,47 @@ document.getElementById("impAppend").addEventListener("click",doImportAppend);
 document.getElementById("impReplace").addEventListener("click",doImportReplace);
 document.getElementById("impCancel").addEventListener("click",closeImport);
 document.getElementById("impScrim").addEventListener("click",closeImport);
+
+/* PWA: manifest（インライン生成）＋ Service Worker（オフラインキャッシュ） */
+(function setupPWA(){
+  try{
+    const manifest={
+      name:"CashFile",short_name:"CashFile",lang:"ja",
+      start_url:".",scope:".",display:"standalone",
+      background_color:"#0a0e1a",theme_color:"#0a0e1a",orientation:"portrait",
+      icons:[192,512].map(s=>({
+        src:"data:image/svg+xml,"+encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='${s}' height='${s}'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#7b8cff'/><stop offset='1' stop-color='#d65ad6'/></linearGradient></defs><rect width='${s}' height='${s}' rx='${s*0.22}' fill='#0a0e1a'/><rect x='${s*0.08}' y='${s*0.08}' width='${s*0.84}' height='${s*0.84}' rx='${s*0.18}' fill='url(#g)'/><text x='50%' y='68%' font-size='${s*0.5}' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'>¥</text></svg>`),
+        sizes:`${s}x${s}`,type:"image/svg+xml",purpose:"any"
+      }))
+    };
+    const mBlob=new Blob([JSON.stringify(manifest)],{type:"application/manifest+json"});
+    const mLink=document.createElement("link");mLink.rel="manifest";mLink.href=URL.createObjectURL(mBlob);
+    document.head.appendChild(mLink);
+
+    if("serviceWorker" in navigator&&location.protocol!=="file:"){
+      // 現在のページHTMLを丸ごとキャッシュし、オフライン時に同じものを返す自己完結SW
+      const swCode=`
+        const CACHE="cashfile-v1";
+        const PAGE=${JSON.stringify(location.pathname)};
+        self.addEventListener("install",e=>{self.skipWaiting();});
+        self.addEventListener("activate",e=>{e.waitUntil(self.clients.claim());});
+        self.addEventListener("fetch",e=>{
+          const req=e.request;
+          if(req.method!=="GET"){return;}
+          e.respondWith(
+            fetch(req).then(res=>{
+              const copy=res.clone();
+              caches.open(CACHE).then(c=>c.put(req,copy)).catch(()=>{});
+              return res;
+            }).catch(()=>caches.match(req).then(r=>r||caches.match(PAGE)))
+          );
+        });`;
+      const swBlob=new Blob([swCode],{type:"text/javascript"});
+      const swUrl=URL.createObjectURL(swBlob);
+      navigator.serviceWorker.register(swUrl).catch(()=>{/* file://やblob制約時は無視 */});
+    }
+  }catch(e){/* PWA非対応環境では何もしない */}
+})();
 
 update();
 </script>
